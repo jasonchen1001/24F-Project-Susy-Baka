@@ -10,6 +10,7 @@
 [client]
 # Turning the default sidebar navigation off so we 
 # can use our own
+
 showSidebarNavigation = false
 
 [theme]
