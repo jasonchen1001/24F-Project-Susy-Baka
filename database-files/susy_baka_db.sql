@@ -15,11 +15,11 @@ CREATE TABLE IF NOT EXISTS user (
 CREATE TABLE IF NOT EXISTS school_admin (
     admin_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
     hire_date DATE,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
-
 
 -- Create grade_record table
 CREATE TABLE IF NOT EXISTS grade_record (
@@ -119,9 +119,7 @@ CREATE TABLE IF NOT EXISTS internship_position (
 CREATE TABLE IF NOT EXISTS maintenance_staff (
     staff_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL UNIQUE,
-    first_name VARCHAR(50),
-    mid_name VARCHAR(50),
-    last_name VARCHAR(50),
+    full_name VARCHAR(100) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -196,122 +194,14 @@ CREATE TABLE IF NOT EXISTS internship_analytics(
 
 SHOW tables;
 
--- Insert data into the user table (2 for each role)
-INSERT INTO user (full_name, email, role, dob, gender)
-VALUES
-('Alice Johnson', 'alice.johnson@student.com', 'Student', '2001-05-15', 'Female'), -- Student 1
-('Bob Smith', 'bob.smith@student.com', 'Student', '2000-09-20', 'Male'),          -- Student 2
-('John Doe', 'john.doe@school.com', 'School_Admin', '1980-03-12', 'Male'),        -- School Admin 1
-('Jane Brown', 'jane.brown@school.com', 'School_Admin', '1975-11-22', 'Female'),  -- School Admin 2
-('Emily Davis', 'emily.davis@hr.com', 'HR_Manager', '1985-06-18', 'Female'),      -- HR Manager 1
-('Michael Scott', 'michael.scott@hr.com', 'HR_Manager', '1982-02-25', 'Male'),    -- HR Manager 2
-('Sarah Connor', 'sarah.connor@maintenance.com', 'Maintenance_Staff', '1978-08-01', 'Female'), -- Maintenance Staff 1
-('James Cameron', 'james.cameron@maintenance.com', 'Maintenance_Staff', '1980-04-14', 'Male'); -- Maintenance Staff 2
-
--- Insert data into the school_admin table (2 administrators)
-INSERT INTO school_admin (admin_id, user_id, hire_date)
-VALUES
-(3, 3, '2015-08-01'), -- Admin John Doe
-(4, 4, '2020-01-15'); -- Admin Jane Brown
-
--- Insert data into the grade_record table (grades for 2 students recorded by different admins)
-INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
-VALUES
-(1, 'Mathematics', 3.8, 3), -- Alice's grade recorded by John Doe
-(2, 'Physics', 3.6, 4),     -- Bob's grade recorded by Jane Brown
-(1, 'Chemistry', 3.9, 3);   -- Alice's grade recorded by John Doe
-
--- Insert data into the co_op_record table (internship records for students approved by different admins)
-INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
-VALUES
-(1, 'TechCorp', '2023-06-01', '2023-08-31', 3), -- Alice's internship approved by John Doe
-(2, 'Innovate Inc', '2023-07-01', '2023-09-30', 4); -- Bob's internship approved by Jane Brown
-
--- Insert data into the student table (2 students)
-INSERT INTO student (user_id, full_name, email)
-VALUES
-(1, 'Alice Johnson', 'alice.johnson@student.com'), -- Student 1
-(2, 'Bob Smith', 'bob.smith@student.com');         -- Student 2
-
--- Insert data into the application table (applications for internships by students)
-INSERT INTO application (application_id, user_id, position_id, sent_on, status)
-VALUES
-(1, 1, 101, '2023-10-01', 'Pending'), -- Alice's application for Position 101
-(2, 2, 102, '2023-10-05', 'Accepted'); -- Bob's application for Position 102
-
--- Insert data into the resume table (2 resumes for students)
-INSERT INTO resume (resume_id, user_id, time_uploaded, doc_name)
-VALUES
-(1, 1, NOW(), 'alice_resume.pdf'), -- Alice's resume
-(2, 2, NOW(), 'bob_resume.pdf');   -- Bob's resume
-
--- Insert data into the suggestion table (suggestions for student resumes)
-INSERT INTO suggestion (suggestion_id, resume_id, time_created, suggestion_text)
-VALUES
-(1, 1, NOW(), 'Add more technical skills'), -- Suggestion for Alice's resume
-(2, 2, NOW(), 'Highlight leadership experience'); -- Suggestion for Bob's resume
-
--- Insert data into the hr_manager table (2 HR managers)
-INSERT INTO hr_manager (user_id, full_name, email)
-VALUES
-(5, 'Emily Davis', 'emily.davis@hr.com'),   -- HR Manager 1
-(6, 'Michael Scott', 'michael.scott@hr.com'); -- HR Manager 2
-
--- Insert data into the internship_position table (positions created by HR managers)
-INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date)
-VALUES
-(1, 'Backend Developer Intern', 'Develop APIs and manage databases.', 'Java, MySQL', 'Active', '2023-09-01'), -- Position by Emily
-(2, 'Frontend Developer Intern', 'Build user interfaces.', 'HTML, CSS, JavaScript', 'Active', '2023-09-15'); -- Position by Michael
-
--- Insert data into the maintenance_staff table (2 maintenance staff members)
-INSERT INTO maintenance_staff (user_id, first_name, mid_name, last_name)
-VALUES
-(7, 'Sarah', 'L.', 'Connor'), -- Maintenance Staff Sarah
-(8, 'James', 'T.', 'Cameron'); -- Maintenance Staff James
-
--- Insert data into the database_info table (databases managed by maintenance staff)
-INSERT INTO database_info (change_id, staff_id, name, version, type, last_update)
-VALUES
-(1, 1, 'MainDB', '1.0', 'Relational', '2023-10-01'),
-(2, 2, 'BackupDB', '1.0', 'Backup', '2023-10-10');
-
--- Insert data into the data_alteration_history table (alteration records)
-INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
-VALUES
-('Index Rebuild', '2023-10-15', 1),
-('Data Cleanup', '2023-10-20', 2);
-
--- Insert data into the backup_history table (backup records)
-INSERT INTO backup_history (type, backup_date, backup_type, details, change_id)
-VALUES
-('Full', '2023-10-10', 'Weekly', 'Weekly full backup completed.', 2),
-('Incremental', '2023-10-17', 'Daily', 'Incremental backup completed.', 2);
-
--- Insert data into the alert_history table (alerts for databases)
-INSERT INTO alert_history (metrics, alerts, severity, database_id)
-VALUES
-('CPU Usage', 'High CPU usage detected', 'High', 1),
-('Disk Space', 'Low disk space warning', 'Medium', 2);
-
--- Insert data into the update_history table (update records)
-INSERT INTO update_history (update_type, update_date, details, change_id)
-VALUES
-('Version Upgrade', '2023-10-12', 'Upgraded MainDB to version 1.1.', 1),
-('Security Patch', '2023-10-18', 'Applied security patch.', 2);
-
--- Insert data into the internship_analytics table (analytics for positions)
-INSERT INTO internship_analytics (position_id, num_internships, average_apps, database_id)
-VALUES
-(1, 5, 3, 1),
-(2, 8, 5, 1);
-
+//////////////////////////////////////////////
 /* 1. Student
 User Stories:
 - Upload and edit resumes.
 - View application history.
 - Update application status.
 - Delete unnecessary resumes.
-*/
+
 
 -- Insert a new resume record for the student
 INSERT INTO resume (resume_id, user_id, time_uploaded, doc_name)
@@ -331,13 +221,13 @@ WHERE application_id = 1;
 DELETE FROM resume
 WHERE resume_id = 3 AND user_id = 1; -- Delete Alice's updated resume added above
 
-/* 2. School Admin
+2. School Admin
 User Stories:
 - Manage student records.
 - Update student academic grades.
 - Delete invalid student records.
 - Query student academic performance.
-*/
+
 
 -- Add a new student record
 INSERT INTO user (full_name, email, role, dob, gender)
@@ -362,13 +252,13 @@ FROM user
 JOIN grade_record ON user.user_id = grade_record.student_id
 WHERE user.user_id = 1; -- Query Alice's academic performance
 
-/* 3. HR Manager
+3. HR Manager
 User Stories:
 - Post and edit internship positions.
 - Delete inactive job postings.
 - Query the number of applicants for each position.
 - Automatically filter resumes.
-*/
+
 
 -- Insert a new internship position
 INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date)
@@ -395,13 +285,13 @@ FROM resume
 JOIN suggestion ON resume.resume_id = suggestion.resume_id
 WHERE suggestion_text LIKE '%technical skills%';
 
-/* 4. Maintenance Staff
+4. Maintenance Staff
 User Stories:
 - Add data cleansing tasks.
 - Remove expired backups.
 - Monitor system performance.
 - Add new databases.
-*/
+
 
 -- Add a data cleansing task
 INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
@@ -423,187 +313,213 @@ VALUES (3, 2, 'AnalyticsDB', '1.0', 'Relational', NOW());
 -- Delete the new database added in this CRUD
 DELETE FROM database_info
 WHERE name = 'AnalyticsDB' AND version = '1.0';
--- Additional sample data INSERT statements
--- Add after your existing INSERT statements
+*/
 
--- Additional users (mix of roles)
+-- Base User Data (38 records - Strong Entity)
 INSERT INTO user (full_name, email, role, dob, gender) VALUES
--- More Students
-('Peter Parker', 'peter.p@student.com', 'Student', '2002-08-10', 'Male'),
-('Mary Jane', 'mary.j@student.com', 'Student', '2002-06-15', 'Female'),
-('Harry Osborn', 'harry.o@student.com', 'Student', '2002-07-20', 'Male'),
-('Gwen Stacy', 'gwen.s@student.com', 'Student', '2002-05-25', 'Female'),
-('Flash Thompson', 'flash.t@student.com', 'Student', '2002-04-30', 'Male'),
-('Betty Brant', 'betty.b@student.com', 'Student', '2002-03-05', 'Female'),
-('Ned Leeds', 'ned.l@student.com', 'Student', '2002-02-10', 'Male'),
-('Liz Allan', 'liz.a@student.com', 'Student', '2002-01-15', 'Female'),
-('Miles Morales', 'miles.m@student.com', 'Student', '2002-12-20', 'Male'),
-('Cindy Moon', 'cindy.m@student.com', 'Student', '2002-11-25', 'Female'),
-('Eugene Thompson', 'eugene.t@student.com', 'Student', '2002-10-30', 'Male'),
-('Sally Avril', 'sally.a@student.com', 'Student', '2002-09-05', 'Female'),
-('Kenny Kong', 'kenny.k@student.com', 'Student', '2002-08-10', 'Male'),
-('Glory Grant', 'glory.g@student.com', 'Student', '2002-07-15', 'Female'),
-('Randy Robertson', 'randy.r@student.com', 'Student', '2002-06-20', 'Male'),
-('Debra Whitman', 'debra.w@student.com', 'Student', '2002-05-25', 'Female'),
-('Jason Ionello', 'jason.i@student.com', 'Student', '2002-04-30', 'Male'),
-('Tiny McKeever', 'tiny.m@student.com', 'Student', '2002-03-05', 'Male'),
-('Charlie Murphy', 'charlie.m@student.com', 'Student', '2002-02-10', 'Male'),
-('Jessica Jones', 'jessica.j@student.com', 'Student', '2002-01-15', 'Female'),
+-- Students (20)
+('Alice Johnson', 'alice.j@student.com', 'Student', '2001-05-15', 'Female'),
+('Bob Smith', 'bob.s@student.com', 'Student', '2000-09-20', 'Male'),
+('Charlie Brown', 'charlie.b@student.com', 'Student', '2001-03-10', 'Male'),
+('Diana Prince', 'diana.p@student.com', 'Student', '2000-07-12', 'Female'),
+('Edward Norton', 'edward.n@student.com', 'Student', '2001-11-30', 'Male'),
+('Fiona Apple', 'fiona.a@student.com', 'Student', '2000-12-25', 'Female'),
+('George Banks', 'george.b@student.com', 'Student', '2001-01-15', 'Male'),
+('Helen Carter', 'helen.c@student.com', 'Student', '2000-06-18', 'Female'),
+('Ian Malcolm', 'ian.m@student.com', 'Student', '2001-08-22', 'Male'),
+('Julia Roberts', 'julia.r@student.com', 'Student', '2000-04-05', 'Female'),
+('Kevin Hart', 'kevin.h@student.com', 'Student', '2001-09-28', 'Male'),
+('Laura Palmer', 'laura.p@student.com', 'Student', '2000-08-14', 'Female'),
+('Michael Jordan', 'michael.j@student.com', 'Student', '2001-02-17', 'Male'),
+('Nancy Wheeler', 'nancy.w@student.com', 'Student', '2000-10-31', 'Female'),
+('Oscar Isaac', 'oscar.i@student.com', 'Student', '2001-07-09', 'Male'),
+('Penny Lane', 'penny.l@student.com', 'Student', '2000-11-11', 'Female'),
+('Quincy Jones', 'quincy.j@student.com', 'Student', '2001-04-23', 'Male'),
+('Rachel Green', 'rachel.g@student.com', 'Student', '2000-05-27', 'Female'),
+('Steve Rogers', 'steve.r@student.com', 'Student', '2001-06-14', 'Male'),
+('Tina Turner', 'tina.t@student.com', 'Student', '2000-03-08', 'Female'),
 
--- More School Admins
-('Charles Xavier', 'charles.x@school.com', 'School_Admin', '1975-09-15', 'Male'),
-('Jean Grey', 'jean.g@school.com', 'School_Admin', '1980-03-20', 'Female'),
-('Scott Summers', 'scott.s@school.com', 'School_Admin', '1978-07-25', 'Male'),
-('Emma Frost', 'emma.f@school.com', 'School_Admin', '1982-11-30', 'Female'),
-('Henry McCoy', 'henry.m@school.com', 'School_Admin', '1976-05-05', 'Male'),
-('Ororo Munroe', 'ororo.m@school.com', 'School_Admin', '1979-01-10', 'Female'),
-('Logan Howlett', 'logan.h@school.com', 'School_Admin', '1977-04-15', 'Male'),
-('Kitty Pryde', 'kitty.p@school.com', 'School_Admin', '1981-08-20', 'Female'),
+-- School Admins (8)
+('William Smith', 'william.s@school.com', 'School_Admin', '1980-03-12', 'Male'),
+('Emma Davis', 'emma.d@school.com', 'School_Admin', '1975-11-22', 'Female'),
+('James Wilson', 'james.w@school.com', 'School_Admin', '1978-07-15', 'Male'),
+('Sarah Johnson', 'sarah.j@school.com', 'School_Admin', '1982-09-30', 'Female'),
+('Robert Brown', 'robert.b@school.com', 'School_Admin', '1977-05-20', 'Male'),
+('Mary Williams', 'mary.w@school.com', 'School_Admin', '1981-12-05', 'Female'),
+('David Miller', 'david.m@school.com', 'School_Admin', '1979-08-18', 'Male'),
+('Patricia Davis', 'patricia.d@school.com', 'School_Admin', '1983-02-28', 'Female'),
 
--- More HR Managers
-('Tony Stark', 'tony.s@hr.com', 'HR_Manager', '1970-05-29', 'Male'),
-('Pepper Potts', 'pepper.p@hr.com', 'HR_Manager', '1975-08-15', 'Female'),
-('Happy Hogan', 'happy.h@hr.com', 'HR_Manager', '1972-11-20', 'Male'),
-('Maria Hill', 'maria.h@hr.com', 'HR_Manager', '1977-02-25', 'Female'),
-('Phil Coulson', 'phil.c@hr.com', 'HR_Manager', '1974-06-30', 'Male'),
-('Nick Fury', 'nick.f@hr.com', 'HR_Manager', '1969-09-05', 'Male'),
-('Sharon Carter', 'sharon.c@hr.com', 'HR_Manager', '1976-12-10', 'Female'),
-('James Rhodes', 'james.r@hr.com', 'HR_Manager', '1973-03-15', 'Male'),
+-- HR Managers (5)
+('John Anderson', 'john.a@hr.com', 'HR_Manager', '1985-06-18', 'Male'),
+('Lisa Taylor', 'lisa.t@hr.com', 'HR_Manager', '1982-02-25', 'Female'),
+('Mark Thompson', 'mark.t@hr.com', 'HR_Manager', '1984-10-12', 'Male'),
+('Karen White', 'karen.w@hr.com', 'HR_Manager', '1983-04-15', 'Female'),
+('Paul Martin', 'paul.m@hr.com', 'HR_Manager', '1981-09-08', 'Male'),
 
--- More Maintenance Staff
-('Bruce Banner', 'bruce.b@maintenance.com', 'Maintenance_Staff', '1980-12-18', 'Male'),
-('Betty Ross', 'betty.r@maintenance.com', 'Maintenance_Staff', '1982-03-23', 'Female'),
-('Leonard Samson', 'leonard.s@maintenance.com', 'Maintenance_Staff', '1981-06-28', 'Male'),
-('Rick Jones', 'rick.j@maintenance.com', 'Maintenance_Staff', '1983-09-02', 'Male'),
-('Jennifer Walters', 'jennifer.w@maintenance.com', 'Maintenance_Staff', '1984-12-07', 'Female'),
-('Samuel Sterns', 'samuel.s@maintenance.com', 'Maintenance_Staff', '1979-03-12', 'Male'),
-('Glenn Talbot', 'glenn.t@maintenance.com', 'Maintenance_Staff', '1978-06-17', 'Male');
+-- Maintenance Staff (5)
+('Thomas Anderson', 'thomas.a@maintenance.com', 'Maintenance_Staff', '1978-08-01', 'Male'),
+('Susan Clark', 'susan.c@maintenance.com', 'Maintenance_Staff', '1980-04-14', 'Female'),
+('Richard Lee', 'richard.l@maintenance.com', 'Maintenance_Staff', '1979-11-27', 'Male'),
+('Jennifer Hall', 'jennifer.h@maintenance.com', 'Maintenance_Staff', '1981-06-23', 'Female'),
+('Daniel King', 'daniel.k@maintenance.com', 'Maintenance_Staff', '1977-12-09', 'Male');
 
--- Additional school_admin records
-INSERT INTO school_admin (user_id, hire_date)
-SELECT user_id, DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 3650) DAY)
-FROM user
-WHERE role = 'School_Admin'
-AND user_id NOT IN (SELECT user_id FROM school_admin);
-
--- Additional student records
+-- Student Table (mapping from user table)
 INSERT INTO student (user_id, full_name, email)
 SELECT user_id, full_name, email
 FROM user
-WHERE role = 'Student'
-AND user_id NOT IN (SELECT user_id FROM student);
+WHERE role = 'Student';
 
--- Additional hr_manager records
+-- School Admin Table (mapping from user table)
+INSERT INTO school_admin (user_id, full_name, hire_date)
+SELECT user_id, full_name, DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 1825) DAY)
+FROM user
+WHERE role = 'School_Admin';
+
+-- HR Manager Table (mapping from user table)
 INSERT INTO hr_manager (user_id, full_name, email)
 SELECT user_id, full_name, email
 FROM user
-WHERE role = 'HR_Manager'
-AND user_id NOT IN (SELECT user_id FROM hr_manager);
+WHERE role = 'HR_Manager';
 
--- Additional maintenance_staff records
-INSERT INTO maintenance_staff (user_id, first_name, mid_name, last_name)
-SELECT
-    user_id,
-    SUBSTRING_INDEX(full_name, ' ', 1),
-    NULL,
-    SUBSTRING_INDEX(full_name, ' ', -1)
+-- Maintenance Staff Table (mapping from user table)
+INSERT INTO maintenance_staff (user_id, full_name)
+SELECT user_id, full_name
 FROM user
-WHERE role = 'Maintenance_Staff'
-AND user_id NOT IN (SELECT user_id FROM maintenance_staff);
+WHERE role = 'Maintenance_Staff';
 
--- Additional grade records
-INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
+-- Internship Positions (30 records)
+INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date) VALUES
+(1, 'Software Developer Intern', 'Develop and maintain web applications', 'Java, Spring Boot, SQL', 'Active', '2023-09-01'),
+(2, 'Frontend Developer Intern', 'Create responsive user interfaces', 'React, TypeScript, CSS', 'Active', '2023-09-05'),
+(3, 'Data Analyst Intern', 'Analyze business metrics and create reports', 'Python, SQL, Tableau', 'Active', '2023-09-10'),
+(4, 'Mobile Developer Intern', 'Develop mobile applications', 'Swift, Kotlin, Flutter', 'Active', '2023-09-15'),
+(5, 'DevOps Engineer Intern', 'Maintain CI/CD pipelines', 'Docker, Kubernetes, Jenkins', 'Active', '2023-09-20'),
+(1, 'QA Engineer Intern', 'Test software applications', 'Selenium, JUnit, TestNG', 'Active', '2023-09-25'),
+(2, 'Machine Learning Intern', 'Build and train ML models', 'Python, TensorFlow, PyTorch', 'Active', '2023-10-01'),
+(3, 'Cloud Engineer Intern', 'Manage cloud infrastructure', 'AWS, Azure, GCP', 'Active', '2023-10-05'),
+(4, 'Security Engineer Intern', 'Implement security measures', 'Network Security, Cryptography', 'Active', '2023-10-10'),
+(5, 'Database Engineer Intern', 'Design and optimize databases', 'MySQL, MongoDB, PostgreSQL', 'Active', '2023-10-15');
+
+-- Database Info (30 records)
+INSERT INTO database_info (change_id, staff_id, name, version, type, last_update) VALUES
+(1, 1, 'StudentDB', '1.0', 'MySQL', '2023-09-01'),
+(2, 2, 'ApplicationDB', '2.0', 'PostgreSQL', '2023-09-05'),
+(3, 3, 'ResumeDB', '1.5', 'MongoDB', '2023-09-10'),
+(4, 4, 'UserDB', '2.1', 'MySQL', '2023-09-15'),
+(5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
+
+-- Resume Table (45 records - some students have multiple resumes)
+INSERT INTO resume (resume_id, user_id, doc_name)
 SELECT
+    ROW_NUMBER() OVER () as resume_id,
     s.user_id,
-    course,
-    ROUND(2 + (RAND() * 2), 2),
-    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
+    CONCAT('resume_', s.user_id, '_v', FLOOR(1 + RAND() * 3), '.pdf')
 FROM student s
-CROSS JOIN (
-    SELECT 'Computer Science' as course UNION ALL
-    SELECT 'Database Systems' UNION ALL
-    SELECT 'Web Development' UNION ALL
-    SELECT 'Data Structures' UNION ALL
-    SELECT 'Algorithms' UNION ALL
-    SELECT 'Software Engineering' UNION ALL
-    SELECT 'Machine Learning' UNION ALL
-    SELECT 'Artificial Intelligence' UNION ALL
-    SELECT 'Operating Systems' UNION ALL
-    SELECT 'Computer Networks'
-) courses
-LIMIT 45;
+CROSS JOIN (SELECT 1 UNION SELECT 2 UNION SELECT 3) n;
 
--- Additional co_op records
-INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
+-- Suggestion Table (45 records - one for each resume)
+INSERT INTO suggestion (suggestion_id, resume_id, suggestion_text)
 SELECT
-    s.user_id,
-    company,
-    start_date,
-    DATE_ADD(start_date, INTERVAL 3 MONTH),
-    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
-FROM student s
-CROSS JOIN (
-    SELECT 'Google' as company, '2023-05-01' as start_date UNION ALL
-    SELECT 'Microsoft', '2023-05-15' UNION ALL
-    SELECT 'Amazon', '2023-06-01' UNION ALL
-    SELECT 'Apple', '2023-06-15' UNION ALL
-    SELECT 'Meta', '2023-07-01' UNION ALL
-    SELECT 'Netflix', '2023-07-15' UNION ALL
-    SELECT 'Twitter', '2023-08-01' UNION ALL
-    SELECT 'LinkedIn', '2023-08-15' UNION ALL
-    SELECT 'Uber', '2023-09-01' UNION ALL
-    SELECT 'Airbnb', '2023-09-15'
-) companies
-LIMIT 45;
+    resume_id,
+    resume_id,
+    ELT(1 + FLOOR(RAND() * 5),
+        'Add more technical skills to your resume',
+        'Include GPA in education section',
+        'Add more details to project descriptions',
+        'Highlight leadership experiences',
+        'Update your technical certifications')
+FROM resume;
 
--- Additional internship positions
-INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date)
-VALUES
-(1, 'AI/ML Engineer Intern', 'Work on machine learning models and AI applications', 'Python, TensorFlow, PyTorch', 'Active', '2023-08-01'),
-(2, 'Cloud Developer Intern', 'Develop cloud-native applications', 'AWS, Docker, Kubernetes', 'Active', '2023-08-15'),
-(3, 'Data Engineer Intern', 'Build data pipelines and ETL processes', 'SQL, Python, Apache Spark', 'Active', '2023-09-01'),
-(1, 'DevOps Engineer Intern', 'Manage CI/CD pipelines and infrastructure', 'Jenkins, Docker, Kubernetes', 'Active', '2023-09-15'),
-(2, 'Mobile App Developer Intern', 'Develop mobile applications', 'Swift, Kotlin, React Native', 'Active', '2023-10-01'),
-(3, 'Security Engineer Intern', 'Work on cybersecurity projects', 'Network Security, Cryptography', 'Active', '2023-10-15'),
-(1, 'UI/UX Designer Intern', 'Design user interfaces and experiences', 'Figma, Adobe XD, Sketch', 'Active', '2023-11-01'),
-(2, 'Quality Assurance Intern', 'Test software applications', 'Selenium, JUnit, TestNG', 'Active', '2023-11-15');
-
--- Additional applications (100+ records)
+-- Applications (100+ records)
 INSERT INTO application (application_id, user_id, position_id, sent_on, status)
 SELECT
-    ROW_NUMBER() OVER () + 100 as application_id,
+    ROW_NUMBER() OVER () as application_id,
     s.user_id,
     p.position_id,
     DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 90) DAY),
     ELT(1 + FLOOR(RAND() * 3), 'Pending', 'Accepted', 'Rejected')
 FROM student s
 CROSS JOIN internship_position p
-WHERE p.status = 'Active'
+LIMIT 120;
+
+-- Grade Records (100+ records)
+INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
+SELECT
+    s.user_id,
+    c.course_name,
+    2 + (RAND() * 2), -- Grades between 2.0 and 4.0
+    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
+FROM student s
+CROSS JOIN (
+    SELECT 'Computer Science' as course_name UNION
+    SELECT 'Database Systems' UNION
+    SELECT 'Web Development' UNION
+    SELECT 'Data Structures' UNION
+    SELECT 'Algorithms'
+) c
+LIMIT 120;
+
+-- Co-op Records (100 records)
+INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
+SELECT
+    s.user_id,
+    c.company_name,
+    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 365) DAY),
+    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 180) DAY),
+    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
+FROM student s
+CROSS JOIN (
+    SELECT 'Google' as company_name UNION
+    SELECT 'Microsoft' UNION
+    SELECT 'Amazon' UNION
+    SELECT 'Apple' UNION
+    SELECT 'Meta'
+) c
 LIMIT 100;
 
--- Additional resumes
-INSERT INTO resume (resume_id, user_id, time_uploaded, doc_name)
+-- Data Alteration History
+INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
 SELECT
-    ROW_NUMBER() OVER () + 100 as resume_id,
-    user_id,
-    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 180) DAY),
-    CONCAT('resume_', user_id, '_v', FLOOR(RAND() * 5), '.pdf')
-FROM student
-CROSS JOIN (SELECT 1 UNION SELECT 2) n
-LIMIT 45;
+    ELT(ROW_NUMBER() OVER () % 3 + 1, 'Schema Update', 'Data Migration', 'Index Rebuild'),
+    DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
+    change_id
+FROM database_info;
 
--- Additional suggestions
-INSERT INTO suggestion (suggestion_id, resume_id, time_created, suggestion_text)
+-- Backup History
+INSERT INTO backup_history (type, backup_date, backup_type, details, change_id)
 SELECT
-    ROW_NUMBER() OVER () + 100 as suggestion_id,
-    resume_id,
-    CURRENT_TIMESTAMP,
-    CASE FLOOR(RAND() * 5)
-        WHEN 0 THEN 'Add more programming languages to skills section'
-        WHEN 1 THEN 'Include GPA in education section'
-        WHEN 2 THEN 'Add more details to project descriptions'
-        WHEN 3 THEN 'Highlight leadership roles in activities'
-        ELSE 'Update technical skills with latest technologies'
-    END
-FROM resume
-LIMIT 45;
+    ELT(ROW_NUMBER() OVER () % 2 + 1, 'Full', 'Incremental'),
+    DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
+    ELT(ROW_NUMBER() OVER () % 2 + 1, 'Daily', 'Weekly'),
+    'Regular scheduled backup',
+    change_id
+FROM database_info;
+
+-- Alert History
+INSERT INTO alert_history (metrics, alerts, severity, database_id)
+SELECT
+    'System Performance',
+    'Performance threshold exceeded',
+    ELT(1 + FLOOR(RAND() * 3), 'Low', 'Medium', 'High'),
+    database_id
+FROM database_info;
+
+-- Update History
+INSERT INTO update_history (update_type, update_date, details, change_id)
+SELECT
+    'Version Update',
+    DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
+    'Regular system update',
+    change_id
+FROM database_info;
+
+-- Internship Analytics
+INSERT INTO internship_analytics (position_id, num_internships, average_apps, database_id)
+SELECT
+    p.position_id,
+    FLOOR(RAND() * 20) + 1,
+    FLOOR(RAND() * 50) + 10,
+    d.database_id
+FROM internship_position p
+CROSS JOIN database_info d
+LIMIT 30;
