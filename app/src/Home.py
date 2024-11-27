@@ -37,7 +37,7 @@ if st.button("Login as William Smith (School Administrator)",
     st.session_state['first_name'] = 'William'
     st.session_state['admin_id'] = 1
     logger.info("Logging in as School Administrator")
-    st.switch_page('pages/10_Admin_Home.py')
+    st.switch_page('pages/20_Admin_Home.py')
 
 # HR Manager Role (John Anderson)
 if st.button("Login as John Anderson (HR Manager)",
@@ -48,7 +48,7 @@ if st.button("Login as John Anderson (HR Manager)",
     st.session_state['first_name'] = 'John'
     st.session_state['hr_id'] = 1
     logger.info("Logging in as HR Manager")
-    st.switch_page('pages/20_HR_Home.py')
+    st.switch_page('pages/40_HR_Home.py')
 
 # Maintenance Staff Role (Thomas Anderson)
 if st.button("Login as Thomas Anderson (Maintenance Staff)",
@@ -59,7 +59,7 @@ if st.button("Login as Thomas Anderson (Maintenance Staff)",
     st.session_state['first_name'] = 'Thomas'
     st.session_state['staff_id'] = 1
     logger.info("Logging in as Maintenance Staff")
-    st.switch_page('pages/30_Maintenance_Home.py')
+    st.switch_page('pages/60_Maintenance_Home.py')
 
 # Add system description
 st.markdown("""
