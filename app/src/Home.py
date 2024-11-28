@@ -26,7 +26,7 @@ if st.button("Login as Alice Johnson (Student)",
     st.session_state['first_name'] = 'Alice'
     st.session_state['user_id'] = 1
     logger.info("Logging in as Student")
-    st.switch_page('pages/00_Student_Home.py')
+    st.switch_page('00_Student_Home')
 
 # School Admin Role (William Smith)
 if st.button("Login as William Smith (School Administrator)",
