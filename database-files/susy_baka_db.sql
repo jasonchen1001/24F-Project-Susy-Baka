@@ -61,13 +61,18 @@ CREATE TABLE IF NOT EXISTS application (
 );
 
 CREATE TABLE IF NOT EXISTS resume (
-    resume_id INT PRIMARY KEY,
-    user_id INT,
+    resume_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
     time_uploaded TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    doc_name VARCHAR(100),
+    doc_name VARCHAR(255),
+    education TEXT,
+    skills TEXT,
+    projects TEXT,
+    co_op TEXT,
     FOREIGN KEY (user_id) REFERENCES student(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS suggestion (
     suggestion_id INT PRIMARY KEY,
@@ -169,6 +174,17 @@ CREATE TABLE IF NOT EXISTS internship_analytics (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+ALTER TABLE application
+ADD CONSTRAINT fk_position
+FOREIGN KEY (position_id) REFERENCES internship_position(position_id)
+ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE application
+MODIFY COLUMN application_id INT AUTO_INCREMENT;
+
+ALTER TABLE suggestion
+MODIFY COLUMN suggestion_id INT AUTO_INCREMENT;
+
 -- Insert base user data
 INSERT INTO user (full_name, email, role, dob, gender) VALUES
 -- Students
@@ -262,27 +278,152 @@ INSERT INTO database_info (change_id, staff_id, name, version, type, last_update
 (4, 4, 'UserDB', '2.1', 'MySQL', '2023-09-15'),
 (5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
 
--- Resume Table
-INSERT INTO resume (resume_id, user_id, doc_name)
-SELECT
-    ROW_NUMBER() OVER () as resume_id,
-    s.user_id,
-    CONCAT('resume_', s.user_id, '_v', FLOOR(1 + RAND() * 3), '.pdf')
-FROM student s
-CROSS JOIN (SELECT 1 UNION SELECT 2 UNION SELECT 3) n;
+-- 先清空相关表的数据
+TRUNCATE TABLE grade_record;
+TRUNCATE TABLE co_op_record;
+TRUNCATE TABLE resume;
+truncate table suggestion;
 
--- Suggestion Table
-INSERT INTO suggestion (suggestion_id, resume_id, suggestion_text)
+-- grade records
+INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
 SELECT
-    resume_id,
-    resume_id,
-    ELT(1 + FLOOR(RAND() * 5),
-        'Add more technical skills to your resume',
-        'Include GPA in education section',
-        'Add more details to project descriptions',
-        'Highlight leadership experiences',
-        'Update your technical certifications')
-FROM resume;
+    s.user_id,
+    'Computer Science Major GPA',
+    2.8 + (RAND() * 1.2),
+    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
+FROM student s
+LIMIT 20;
+
+-- coop record
+INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
+WITH company_list AS (
+    SELECT 'Google' as company_name UNION
+    SELECT 'Microsoft' UNION
+    SELECT 'Amazon' UNION
+    SELECT 'Apple' UNION
+    SELECT 'Meta' UNION
+    SELECT 'IBM' UNION
+    SELECT 'Intel' UNION
+    SELECT 'Salesforce' UNION
+    SELECT 'Adobe' UNION
+    SELECT 'Twitter' UNION
+    SELECT 'LinkedIn' UNION
+    SELECT 'Uber' UNION
+    SELECT 'Airbnb' UNION
+    SELECT 'Netflix' UNION
+    SELECT 'Oracle'
+),
+student_companies AS (
+    SELECT
+        s.user_id as student_id,
+        c.company_name,
+        ROW_NUMBER() OVER (PARTITION BY s.user_id ORDER BY RAND()) as rn
+    FROM student s
+    CROSS JOIN company_list c
+    WHERE s.user_id <= 20
+    AND RAND() < 0.3
+)
+SELECT
+    student_id,
+    company_name,
+    DATE_SUB(CURRENT_DATE, INTERVAL (180 + FLOOR(RAND() * 185)) DAY) as start_date,
+    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 179) DAY) as end_date,
+    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1) as approved_by
+FROM student_companies
+WHERE rn <= 3
+ORDER BY student_id, start_date DESC;
+
+-- resume
+INSERT INTO resume (user_id, doc_name, education, skills, projects, co_op)
+SELECT
+    s.user_id,
+    CONCAT('resume_', s.user_id, '.pdf'),
+    CONCAT(
+        'Bachelor of Science in Computer Science, GPA: ',
+        (SELECT FORMAT(grade, 2) FROM grade_record WHERE student_id = s.user_id)
+    ) as education,
+    CONCAT(
+        'Skills: ',
+        ELT(FLOOR(RAND() * 6) + 1, 'Python', 'Java', 'C++', 'JavaScript', 'Ruby', 'PHP'),
+        ', ',
+        ELT(FLOOR(RAND() * 6) + 1, 'React', 'Angular', 'Vue.js', 'Node.js', 'Django', 'Flask'),
+        ', ',
+        ELT(FLOOR(RAND() * 6) + 1, 'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'OracleDB', 'Redis')
+    ) as skills,
+    CONCAT(
+        'Projects: ',
+        ELT(FLOOR(RAND() * 6) + 1,
+            'Developed a Personal Finance Tracker App',
+            'Built a Machine Learning Model for Sentiment Analysis',
+            'Designed a Collaborative Team Task Management System',
+            'Implemented an E-commerce Platform with Payment Integration',
+            'Created a Social Media Platform for Hobby Communities',
+            'Optimized a Blog Website for SEO and Scalability')
+    ) as projects,
+    CONCAT(
+        'Internships: ',
+        COALESCE(
+            GROUP_CONCAT(
+                CONCAT(
+                    cr.company_name,
+                    ' (',
+                    DATE_FORMAT(cr.start_date, '%M %Y'),
+                    ' - ',
+                    DATE_FORMAT(cr.end_date, '%M %Y'),
+                    ')'
+                )
+                ORDER BY cr.start_date DESC
+                SEPARATOR '; '
+            ),
+            'No internship experience'
+        )
+    ) as co_op
+FROM student s
+LEFT JOIN co_op_record cr ON s.user_id = cr.student_id
+WHERE s.user_id <= 20
+GROUP BY s.user_id;
+
+-- suggestions
+INSERT INTO suggestion (resume_id, suggestion_text) VALUES
+(1, 'Your GPA of 3.40 is competitive. Consider elaborating on specific modules or algorithms you implemented in the Task Management System. With experience at major tech companies, highlight any cross-team collaboration and quantifiable impacts from your projects.'),
+
+(2, 'Strong GPA of 3.62 shows academic excellence. For the blog optimization project, include specific metrics like improved load times or SEO rankings. With your MongoDB skills, mention any database optimization techniques you implemented.'),
+
+(3, 'Exceptional GPA of 3.85 is impressive. With your diverse internship experience across Salesforce, Google, and Intel, highlight how you applied your PHP and SQL skills in different enterprise environments. Include specific contributions to each company.'),
+
+(4, 'Consider highlighting how you used MongoDB in your social media platform project. With experience at Airbnb, Apple, and Amazon, emphasize any scalability challenges you solved. Your 3.55 GPA demonstrates strong academic performance.'),
+
+(5, 'Your Angular and Java combination is valuable for enterprise development. With experience at LinkedIn and Microsoft, detail any feature implementations that impacted user engagement. Your 3.62 GPA strengthens your profile.'),
+
+(6, 'For your e-commerce platform, detail specific payment systems you integrated. Your Python and Django skills align well with your backend experience. Quantify the transaction volumes or performance improvements you achieved.'),
+
+(7, 'Strong technical foundation with C++ and Meta experience. Consider adding metrics about the Finance Tracker App\'s user base or performance. Detail how you used OracleDB for data management.'),
+
+(8, 'Focus on explaining the machine learning models you built, including accuracy rates and real-world applications. Your internships at Salesforce and IBM provide good enterprise experience - highlight specific projects and their impact.'),
+
+(9, 'In your e-commerce platform experience, quantify the scale of transactions processed. With Meta and Salesforce experience, highlight any cloud infrastructure or scalability improvements you implemented.'),
+
+(10, 'Your PHP and MySQL skills could be highlighted with specific performance optimizations. Detail the payment integration methods in your e-commerce project. Consider adding metrics from your Intel and Apple internships.'),
+
+(11, 'Highlight specific SEO improvements achieved in your blog optimization project. Your experience with Microsoft could be enhanced by mentioning specific technologies used. Consider adding metrics to demonstrate impact.'),
+
+(12, 'Strong mix of front-end and database skills. With experience at Microsoft and Oracle, highlight any enterprise-scale challenges you solved. Add specific examples of Node.js implementations.'),
+
+(13, 'Excellent 3.78 GPA shows strong academic foundation. For your social media platform, detail user engagement metrics or scalability solutions. Highlight specific contributions at Amazon and Apple.'),
+
+(14, 'Outstanding 3.81 GPA is a strong differentiator. Consider adding specific features you implemented in the Task Management System. Detail how you used Django and MySQL together for scalability.'),
+
+(15, 'Strong JavaScript and Redis expertise. For your e-commerce platform, include performance metrics and scalability solutions. Your Amazon experience could be enhanced with specific project outcomes.'),
+
+(16, 'Your experience with React and MongoDB is valuable. Add metrics about the Task Management System\'s user base or performance improvements. Detail specific contributions at Oracle and Microsoft.'),
+
+(17, 'Exceptional 3.95 GPA is remarkable. For your machine learning project, include accuracy rates and real-world applications. Highlight specific technologies used during your Intel and IBM internships.'),
+
+(18, 'Your Java and Angular skills align well with enterprise development. Detail specific features implemented in the Task Management System. Consider adding metrics from your Meta internship experience.'),
+
+(19, 'Strong Python and Django combination. Consider adding user metrics or performance improvements from your Task Management System. Detail specific projects at Airbnb and Salesforce.'),
+
+(20, 'Good balance of front-end and back-end skills. For your e-commerce platform, include transaction volumes or performance metrics. Highlight specific contributions at Adobe and LinkedIn.');
 
 -- Applications
 INSERT INTO application (application_id, user_id, position_id, sent_on, status)
@@ -295,42 +436,6 @@ SELECT
 FROM student s
 CROSS JOIN internship_position p
 LIMIT 120;
-
--- Grade Records
-INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
-SELECT
-    s.user_id,
-    c.course_name,
-    2 + (RAND() * 2), -- Grades between 2.0 and 4.0
-    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
-FROM student s
-CROSS JOIN (
-    SELECT 'Computer Science' as course_name UNION
-    SELECT 'Database Systems' UNION
-    SELECT 'Web Development' UNION
-    SELECT 'Data Structures' UNION
-    SELECT 'Algorithms'
-) c
-LIMIT 120;
-
--- Co-op Records
-INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
-SELECT
-    s.user_id,
-    c.company_name,
-    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 365) DAY),
-    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 180) DAY),
-    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1)
-FROM student s
-CROSS JOIN (
-    SELECT 'Google' as company_name UNION
-    SELECT 'Microsoft' UNION
-    SELECT 'Amazon' UNION
-    SELECT 'Apple' UNION
-    SELECT 'Meta'
-) c
-LIMIT 100;
-
 -- Data Alteration History
 INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
 SELECT

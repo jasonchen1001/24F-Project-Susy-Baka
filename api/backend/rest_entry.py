@@ -1,6 +1,7 @@
 from flask import Flask
 from backend.db_connection import db
-from backend.hr.hr_routes import hr_bp  # 只保留我们需要的 hr 模块
+from backend.hr.hr_routes import hr_bp 
+from backend.student.student_routes import student
 import os
 from dotenv import load_dotenv
 
@@ -25,6 +26,7 @@ def create_app():
     # Register blueprints
     app.logger.info('current_app(): registering blueprints with Flask app object.')   
     app.register_blueprint(hr_bp, url_prefix='/hr')  # 只注册 hr blueprint
+    app.register_blueprint(student, url_prefix='/student')  # 只注册 student blueprint
 
     return app
 

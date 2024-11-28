@@ -1,4 +1,5 @@
 import streamlit as st
+
 #### ------------------------ General ------------------------
 def HomeNav():
     st.sidebar.page_link("Home.py", label="Home", icon="🏠")
@@ -10,14 +11,14 @@ def AboutPageNav():
 def StudentHomeNav():
     st.sidebar.page_link("pages/00_Student_Home.py", label="Student Dashboard", icon="👨‍🎓")
 
+def PersonalInfoNav():
+    st.sidebar.page_link("pages/01_Student_PersonalInfo.py", label="Personal Information", icon="👤")
+
 def ResumeManagementNav():
-    st.sidebar.page_link("pages/01_Resume_Management.py", label="Resume Management", icon="📄")
+    st.sidebar.page_link("pages/02_Student_ResumeManager.py", label="Resume Management", icon="📄")
 
 def ApplicationManagementNav():
-    st.sidebar.page_link("pages/02_Application_Management.py", label="Applications", icon="📝")
-
-def NotificationsNav():
-    st.sidebar.page_link("pages/03_Notifications.py", label="Notifications", icon="🔔")
+    st.sidebar.page_link("pages/03_Student_Applications.py", label="Application Tracker", icon="📝")
 
 #### ------------------------ School Admin Role ------------------------
 def AdminHomeNav():
@@ -31,7 +32,6 @@ def HRHomeNav():
     st.sidebar.page_link("pages/40_HR_Home.py", label="HR Dashboard", icon="👥")
 
 def InternshipNav():
-    # 修改为你的职位管理页面的实际文件名
     st.sidebar.page_link("pages/41_HR_PositionManager.py", label="Manage Internships", icon="💼")
 
 def ApplicationReviewNav():
@@ -46,6 +46,7 @@ def MaintenanceHomeNav():
 
 def SystemMonitoringNav():
     st.sidebar.page_link("pages/61_System_Monitoring.py", label="Monitoring", icon="📊")
+
 
 def SideBarLinks(show_home=False):
     """
@@ -66,29 +67,26 @@ def SideBarLinks(show_home=False):
     if st.session_state["authenticated"]:
         if st.session_state["role"] == "Student":
             StudentHomeNav()
+            PersonalInfoNav()
             ResumeManagementNav()
             ApplicationManagementNav()
-            NotificationsNav()
-
         elif st.session_state["role"] == "School_Admin":
             AdminHomeNav()
             StudentRecordsNav()
-
         elif st.session_state["role"] == "HR_Manager":
             HRHomeNav()
             InternshipNav()
             ApplicationReviewNav()
             ResumeScreenNav()
-
         elif st.session_state["role"] == "Maintenance_Staff":
             MaintenanceHomeNav()
             SystemMonitoringNav()
 
-        # Always show About page
-        AboutPageNav()
+    # Always show About page
+    AboutPageNav()
 
-        # Logout button
-        if st.sidebar.button("Logout"):
-            del st.session_state["role"]
-            del st.session_state["authenticated"]
-            st.switch_page("Home.py")
+    # Logout button
+    if st.sidebar.button("Logout"):
+        del st.session_state["role"]
+        del st.session_state["authenticated"]
+        st.switch_page("Home.py")
