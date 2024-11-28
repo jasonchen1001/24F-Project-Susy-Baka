@@ -21,49 +21,27 @@ if not st.session_state.get("authenticated") or st.session_state.get("role") != 
 st.write(f"Welcome, {st.session_state.get('first_name')}!")
 st.write("\n")
 
-# Initialize Session States for Expansion Panels
-if "performance_expanded" not in st.session_state:
-    st.session_state.performance_expanded = False
-if "backup_expanded" not in st.session_state:
-    st.session_state.backup_expanded = False
+# Create layout with columns
+col1, col2 = st.columns(2)
 
-# Navigation Buttons
-if st.button("Monitor System Performance"):
-    st.session_state.performance_expanded = not st.session_state.performance_expanded
+with col1:
+    if st.button("Monitor System Performance", use_container_width=True):
+        st.switch_page("pages/61_Maintenance_PerformanceMonitor.py")
+            
+    if st.button("Manage Backups", use_container_width=True):
+        st.switch_page("pages/62_Maintenance_BackupManager.py")
+            
+    if st.button("Manage Alerts", use_container_width=True):
+        st.switch_page("pages/63_Alert_Manager.py")
 
-if st.session_state.performance_expanded:
-    if st.button("View Performance Dashboard"):
-        st.session_state["page"] = "61_Maintenance_PerformanceMonitor"
-        st.rerun()
-    if st.button("Performance History"):
-        st.session_state["page"] = "61_Maintenance_PerformanceMonitor"
-        st.rerun()
-
-if st.button("Manage Backups"):
-    st.session_state.backup_expanded = not st.session_state.backup_expanded
-
-if st.session_state.backup_expanded:
-    if st.button("Create New Backup"):
-        st.session_state["page"] = "62_Maintenance_BackupManager"
-        st.rerun()
-    if st.button("View Backup History"):
-        st.session_state["page"] = "62_Maintenance_BackupManager"
-        st.rerun()
-
-if st.button("Manage Alerts"):
-    st.session_state["page"] = "63_Alert_Manager"
-    st.rerun()
-
-if st.button("Manage Tasks"):
-    st.session_state["page"] = "64_Task_Manager"
-    st.rerun()
-
-if st.button("Manage Database Schema"):
-    st.session_state["page"] = "65_Schema_Manager"
-    st.rerun()
-
-# Metrics Section
-st.write("### System Overview")
-st.metric("Active Alerts", "3")
-st.metric("Pending Tasks", "5")
-st.metric("Last Backup", "2 hours ago")
+with col2:
+    if st.button("Manage Tasks", use_container_width=True):
+        st.switch_page("pages/64_Task_Manager.py")
+            
+    if st.button("Manage Database Schema", use_container_width=True):
+        st.switch_page("pages/65_Schema_Manager.py")
+            
+    st.write("### System Overview")
+    st.metric("Active Alerts", "3")
+    st.metric("Pending Tasks", "5")
+    st.metric("Last Backup", "2 hours ago")

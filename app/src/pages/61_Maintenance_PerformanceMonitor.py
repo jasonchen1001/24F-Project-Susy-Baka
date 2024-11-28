@@ -1,103 +1,153 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
 from modules.nav import SideBarLinks
 import logging
+import pandas as pd
 import requests
+from datetime import datetime
 
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_performance_data():
+def load_backup_history():
     try:
-        response = requests.get('http://localhost:5000/api/system/performance')
+        # Replace with your actual API endpoint
+        response = requests.get('http://localhost:5000/api/system/backups')
         if response.status_code == 200:
             data = response.json()
             return pd.DataFrame(data)
         else:
-            st.error("Failed to load performance data")
+            st.error("Failed to load backup history")
             return pd.DataFrame()
     except Exception as e:
-        logger.error(f"Error loading performance data: {str(e)}")
+        logger.error(f"Error loading backup history: {str(e)}")
         st.error("Error connecting to server")
         return pd.DataFrame()
 
-def show_performance_monitor():
-    st.title('System Performance Monitor')
-    
-    # Check authentication
-    if not st.session_state.get('authenticated') or st.session_state.get('role') != 'Maintenance_Staff':
-        st.error('Please login as Maintenance Staff to access this page')
+def show_backup_manager():
+    # Authentication Check
+    if not st.session_state.get("authenticated") or st.session_state.get("role") != "Maintenance_Staff":
+        st.error("Please login as Maintenance Staff to access this page.")
         st.stop()
+
+    st.title("Backup Management System")
     
-    # Load performance data
-    df = load_performance_data()
-    if df.empty:
-        return
+    # Return to Home button
+    if st.button("← Back to Home"):
+        st.switch_page("pages/60_Maintenance_Home.py")
     
-    # Create performance metrics visualization
-    st.write("### Performance Trends")
-    fig = px.line(df, x='last_update', y='metrics', 
-                  color='database_name', 
-                  title='System Performance Metrics')
-    st.plotly_chart(fig, use_container_width=True)
+    st.divider()
     
-    # Show detailed metrics table
-    st.write("### Detailed Metrics")
+    # Main backup operations in columns
+    col1, col2, col3 = st.columns(3)
     
-    # Add filters
-    col1, col2 = st.columns(2)
     with col1:
-        selected_db = st.multiselect('Filter by Database:', 
-                                   options=df['database_name'].unique(),
-                                   default=[])
+        if st.button("Create New Backup", use_container_width=True):
+            st.session_state["backup_action"] = "create"
+            
     with col2:
-        severity_filter = st.multiselect('Filter by Severity:', 
-                                       options=df['severity'].unique(),
-                                       default=[])
+        if st.button("View Backup History", use_container_width=True):
+            st.session_state["backup_action"] = "history"
+            
+    with col3:
+        if st.button("Backup Settings", use_container_width=True):
+            st.session_state["backup_action"] = "settings"
     
-    # Apply filters
-    filtered_df = df.copy()
-    if selected_db:
-        filtered_df = filtered_df[filtered_df['database_name'].isin(selected_db)]
-    if severity_filter:
-        filtered_df = filtered_df[filtered_df['severity'].isin(severity_filter)]
+    st.divider()
     
-    # Display filtered data
-    st.dataframe(filtered_df, use_container_width=True)
+    # Initialize backup action if not set
+    if "backup_action" not in st.session_state:
+        st.session_state["backup_action"] = None
     
-    # Add update monitoring form
-    st.write("### Update Monitoring Parameters")
-    with st.form("update_monitoring"):
-        selected_database = st.selectbox('Select Database:', 
-                                       options=df['database_name'].unique())
-        metrics = st.text_input('Metrics:')
-        alerts = st.text_input('Alerts:')
-        severity = st.selectbox('Severity:', ['Low', 'Medium', 'High'])
-        
-        if st.form_submit_button("Update"):
-            try:
-                database_id = df[df['database_name'] == selected_database]['database_id'].iloc[0]
-                response = requests.put(
-                    'http://localhost:5000/api/system/performance',
-                    json={
-                        'database_id': database_id,
-                        'metrics': metrics,
-                        'alerts': alerts,
-                        'severity': severity
-                    }
+    # Handle different backup actions
+    if st.session_state["backup_action"] == "create":
+        st.header("Create New Backup")
+        with st.form("create_backup"):
+            backup_type = st.selectbox('Backup Type:', ['Full', 'Incremental'])
+            schedule = st.selectbox('Schedule:', ['Daily', 'Weekly'])
+            description = st.text_area('Description:')
+            
+            if st.form_submit_button("Create Backup"):
+                try:
+                    response = requests.post(
+                        'http://localhost:5000/api/system/backups',
+                        json={
+                            'type': backup_type,
+                            'schedule': schedule,
+                            'description': description,
+                            'date': datetime.now().strftime('%Y-%m-%d')
+                        }
+                    )
+                    if response.status_code == 200:
+                        st.success("Backup created successfully!")
+                    else:
+                        st.error("Failed to create backup")
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+                    
+    elif st.session_state["backup_action"] == "history":
+        st.header("Backup History")
+        df = load_backup_history()
+        if not df.empty:
+            # Add filters
+            col1, col2 = st.columns(2)
+            with col1:
+                type_filter = st.multiselect(
+                    'Filter by Type:',
+                    options=df['type'].unique(),
+                    default=[]
                 )
-                if response.status_code == 200:
-                    st.success("Monitoring parameters updated successfully")
-                else:
-                    st.error("Failed to update monitoring parameters")
-            except Exception as e:
-                logger.error(f"Error updating monitoring parameters: {str(e)}")
-                st.error("Error connecting to server")
+            with col2:
+                schedule_filter = st.multiselect(
+                    'Filter by Schedule:',
+                    options=df['schedule'].unique(),
+                    default=[]
+                )
+                
+            # Apply filters
+            filtered_df = df
+            if type_filter:
+                filtered_df = filtered_df[filtered_df['type'].isin(type_filter)]
+            if schedule_filter:
+                filtered_df = filtered_df[filtered_df['schedule'].isin(schedule_filter)]
+                
+            # Display backups with delete option
+            for idx, row in filtered_df.iterrows():
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.write(f"**Date:** {row.get('date', 'N/A')}")
+                    st.write(f"**Type:** {row.get('type', 'N/A')}")
+                    st.write(f"**Schedule:** {row.get('schedule', 'N/A')}")
+                    if 'description' in row:
+                        st.write(f"**Description:** {row['description']}")
+                with col2:
+                    if st.button('Delete', key=f'delete_{idx}'):
+                        try:
+                            response = requests.delete(
+                                f'http://localhost:5000/api/system/backups/{row["id"]}'
+                            )
+                            if response.status_code == 200:
+                                st.success("Backup deleted successfully!")
+                                st.rerun()
+                            else:
+                                st.error("Failed to delete backup")
+                        except Exception as e:
+                            st.error(f"Error: {str(e)}")
+                st.divider()
+                
+    elif st.session_state["backup_action"] == "settings":
+        st.header("Backup Settings")
+        with st.form("backup_settings"):
+            st.selectbox("Default Backup Type", ["Full", "Incremental"])
+            st.selectbox("Default Schedule", ["Daily", "Weekly"])
+            st.number_input("Retention Period (days)", min_value=1, value=30)
+            st.text_input("Backup Location")
+            
+            if st.form_submit_button("Save Settings"):
+                st.success("Settings saved successfully!")
 
 def main():
     SideBarLinks(show_home=True)
-    show_performance_monitor()
+    show_backup_manager()
 
 if __name__ == "__main__":
     main()
