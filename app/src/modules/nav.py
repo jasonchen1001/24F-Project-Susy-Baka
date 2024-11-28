@@ -31,7 +31,14 @@ def HRHomeNav():
     st.sidebar.page_link("pages/40_HR_Home.py", label="HR Dashboard", icon="👥")
 
 def InternshipNav():
-    st.sidebar.page_link("pages/41_Internships.py", label="Manage Internships", icon="💼")
+    # 修改为你的职位管理页面的实际文件名
+    st.sidebar.page_link("pages/41_HR_PositionManager.py", label="Manage Internships", icon="💼")
+
+def ApplicationReviewNav():
+    st.sidebar.page_link("pages/42_HR_ApplicationReview.py", label="Review Applications", icon="📋")
+
+def ResumeScreenNav():
+    st.sidebar.page_link("pages/43_HR_ResumeScreen.py", label="Resume Screening", icon="📄")
 
 #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
@@ -70,6 +77,8 @@ def SideBarLinks(show_home=False):
         elif st.session_state["role"] == "HR_Manager":
             HRHomeNav()
             InternshipNav()
+            ApplicationReviewNav()
+            ResumeScreenNav()
 
         elif st.session_state["role"] == "Maintenance_Staff":
             MaintenanceHomeNav()

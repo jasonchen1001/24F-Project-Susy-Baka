@@ -1,7 +1,6 @@
 import streamlit as st
 from modules.nav import SideBarLinks
 import logging
-import pandas as pd
 import requests
 
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
@@ -21,54 +20,97 @@ def show_resume_screen():
     
     st.divider()
     
-    # Main operations
-    col1, col2, col3 = st.columns(3)
+    # Create tabs for different views
+    tab1, tab2, tab3 = st.tabs(["Review Resumes", "Screening History", "Analytics"])
     
-    with col1:
-        if st.button("Review Resumes", use_container_width=True):
-            st.session_state["screen_action"] = "review"
-            
-    with col2:
-        if st.button("Screening History", use_container_width=True):
-            st.session_state["screen_action"] = "history"
-            
-    with col3:
-        if st.button("Screening Analytics", use_container_width=True):
-            st.session_state["screen_action"] = "analytics"
-
-    st.divider()
-
-    # Initialize action if not set
-    if "screen_action" not in st.session_state:
-        st.session_state["screen_action"] = None
-
-    # Display different sections based on selected action
-    if st.session_state["screen_action"] == "review":
-        st.header("Resume Review")
-        with st.container():
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.write("Student: Jane Smith")
-                st.write("Resume Version: 2.0")
-                st.write("Last Updated: 2023-11-15")
-            with col2:
-                if st.button("Provide Feedback"):
-                    st.session_state["show_feedback"] = True
-
-        if st.session_state.get("show_feedback", False):
-            with st.form("feedback_form"):
-                feedback = st.text_area("Enter Feedback")
-                if st.form_submit_button("Submit Feedback"):
-                    st.success("Feedback submitted successfully!")
-                    st.session_state["show_feedback"] = False
-
-    elif st.session_state["screen_action"] == "history":
-        st.header("Screening History")
-        # Add screening history display
-
-    elif st.session_state["screen_action"] == "analytics":
-        st.header("Screening Analytics")
-        # Add analytics display
+    # Tab 1: Review Resumes
+    with tab1:
+        try:
+            response = requests.get("http://localhost:4000/hr/resumes")
+            if response.status_code == 200:
+                resumes = response.json()
+                
+                if not resumes:
+                    st.info("No resumes to review.")
+                
+                for resume in resumes:
+                    with st.expander(f"{resume['full_name']} - {resume['doc_name']}"):
+                        col1, col2 = st.columns([3, 1])
+                        
+                        with col1:
+                            st.write(f"**Student:** {resume['full_name']}")
+                            st.write(f"**Email:** {resume['email']}")
+                            st.write(f"**Uploaded:** {resume['time_uploaded']}")
+                            if resume.get('latest_suggestion'):
+                                st.write("**Latest Feedback:**")
+                                st.info(resume['latest_suggestion'])
+                        
+                        with col2:
+                            # Add feedback form within the expander
+                            with st.form(f"feedback_form_{resume['resume_id']}"):
+                                feedback = st.text_area("Enter Feedback")
+                                if st.form_submit_button("Submit Feedback"):
+                                    response = requests.post(
+                                        f"http://localhost:4000/hr/resumes/{resume['resume_id']}/suggestions",
+                                        json={"suggestion_text": feedback}
+                                    )
+                                    if response.status_code == 201:
+                                        st.success("Feedback submitted successfully!")
+                                        st.rerun()
+                                        
+        except Exception as e:
+            st.error(f"Error loading resumes: {str(e)}")
+    
+    # Tab 2: Screening History
+    with tab2:
+        try:
+            response = requests.get("http://localhost:4000/hr/resumes")
+            if response.status_code == 200:
+                resumes = response.json()
+                
+                # Create a more detailed view of screening history
+                for resume in resumes:
+                    if resume.get('latest_suggestion'):
+                        with st.expander(f"{resume['full_name']} - {resume['doc_name']}"):
+                            st.write(f"**Student:** {resume['full_name']}")
+                            st.write(f"**Resume Version:** {resume['doc_name']}")
+                            st.write(f"**Last Updated:** {resume['time_uploaded']}")
+                            st.write("**Feedback:**")
+                            st.info(resume['latest_suggestion'])
+                            
+        except Exception as e:
+            st.error(f"Error loading screening history: {str(e)}")
+    
+    # Tab 3: Analytics
+    with tab3:
+        try:
+            response = requests.get("http://localhost:4000/hr/resumes")
+            if response.status_code == 200:
+                resumes = response.json()
+                
+                # Calculate some basic analytics
+                total_resumes = len(resumes)
+                resumes_with_feedback = sum(1 for r in resumes if r.get('latest_suggestion'))
+                
+                # Display metrics
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Total Resumes", total_resumes)
+                with col2:
+                    st.metric("Resumes with Feedback", resumes_with_feedback)
+                    
+                # Display resume statistics
+                st.write("### Resume Activity")
+                if resumes:
+                    resume_data = {
+                        "Student": [r['full_name'] for r in resumes],
+                        "Upload Date": [r['time_uploaded'] for r in resumes],
+                        "Has Feedback": ['Yes' if r.get('latest_suggestion') else 'No' for r in resumes]
+                    }
+                    st.dataframe(resume_data)
+                
+        except Exception as e:
+            st.error(f"Error loading analytics: {str(e)}")
 
 def main():
     SideBarLinks(show_home=True)
