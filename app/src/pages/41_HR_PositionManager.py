@@ -45,29 +45,34 @@ def show_position_manager():
     # Tab 1: Manage Positions
     with tab1:
         try:
-            response = requests.get("http://localhost:4000/hr/internships")
-            if response.status_code == 200:
-                positions = response.json()
-                for pos in positions:
-                    with st.expander(f"{pos['title']} ({pos['status']})"):
-                        st.write("#### Description")
-                        st.write(pos['description'])
-                        st.write("#### Requirements")
-                        st.write(pos['requirements'])
-                        st.write(f"Posted on: {pos['posted_date']}")
-                        
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            if st.button("Edit", key=f"edit_{pos['position_id']}"):
-                                st.session_state['editing_position'] = pos
-                                st.rerun()
-                        with col2:
-                            if st.button("Delete", key=f"delete_{pos['position_id']}", type="secondary"):
-                                if st.button("Confirm Delete", key=f"confirm_{pos['position_id']}", type="primary"):
-                                    response = requests.delete(f"http://localhost:4000/hr/internships/{pos['position_id']}")
-                                    if response.status_code == 200:
-                                        st.success("Position deleted successfully!")
-                                        st.rerun()
+            with st.spinner("Loading positions..."):
+                response = requests.get("http://web-api:4000/hr/internships")
+                if response.status_code == 200:
+                    positions = response.json()
+                    if not positions:
+                        st.info("No internship positions available.")
+                    for pos in positions:
+                        with st.expander(f"{pos['title']} ({pos['status']})"):
+                            st.write("#### Description")
+                            st.write(pos['description'])
+                            st.write("#### Requirements")
+                            st.write(pos['requirements'])
+                            st.write(f"Posted on: {pos['posted_date']}")
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                if st.button("Edit", key=f"edit_{pos['position_id']}"):
+                                    st.session_state['editing_position'] = pos
+                                    st.rerun()
+                            with col2:
+                                if st.button("Delete", key=f"delete_{pos['position_id']}", type="secondary"):
+                                    if st.button("Confirm Delete", key=f"confirm_{pos['position_id']}", type="primary"):
+                                        response = requests.delete(f"http://web-api:4000/hr/internships/{pos['position_id']}")
+                                        if response.status_code == 200:
+                                            st.success("Position deleted successfully!")
+                                            st.rerun()
+                else:
+                    st.error("Failed to load positions")
         except Exception as e:
             st.error(f"Error loading positions: {str(e)}")
 
@@ -79,7 +84,7 @@ def show_position_manager():
             if position_data:
                 try:
                     response = requests.put(
-                        f"http://localhost:4000/hr/internships/{st.session_state['editing_position']['position_id']}",
+                        f"http://web-api:4000/hr/internships/{st.session_state['editing_position']['position_id']}",
                         json=position_data
                     )
                     if response.status_code == 200:
@@ -94,7 +99,7 @@ def show_position_manager():
             if position_data:
                 try:
                     response = requests.post(
-                        "http://localhost:4000/hr/internships",
+                        "http://web-api:4000/hr/internships",
                         json=position_data
                     )
                     if response.status_code == 201:
@@ -106,19 +111,35 @@ def show_position_manager():
     # Tab 3: Analytics
     with tab3:
         try:
-            response = requests.get("http://localhost:4000/hr/analytics/positions")
-            if response.status_code == 200:
-                analytics = response.json()
-                st.write("### Position Analytics")
-                for pos in analytics:
-                    st.write(f"#### {pos['title']}")
+            with st.spinner("Loading analytics..."):
+                response = requests.get("http://web-api:4000/hr/analytics/positions")
+                if response.status_code == 200:
+                    analytics = response.json()
+                    st.write("### Position Analytics")
+                    
+                    # Overall metrics
+                    total_apps = sum(pos.get('total_applications', 0) for pos in analytics)
+                    total_accepted = sum(pos.get('accepted', 0) for pos in analytics)
+                    
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.metric("Total Applications", pos['total_applications'])
+                        st.metric("Total Positions", len(analytics))
                     with col2:
-                        st.metric("Accepted", pos['accepted'])
+                        st.metric("Total Applications", total_apps)
                     with col3:
-                        st.metric("Pending", pos['pending'])
+                        acceptance_rate = (total_accepted / total_apps * 100) if total_apps > 0 else 0
+                        st.metric("Acceptance Rate", f"{acceptance_rate:.1f}%")
+
+                    # Per-position metrics
+                    st.write("### Position-wise Metrics")
+                    for pos in analytics:
+                        with st.expander(pos['title']):
+                            st.write(f"**Total Applications:** {pos.get('total_applications', 0)}")
+                            st.write(f"**Accepted:** {pos.get('accepted', 0)}")
+                            st.write(f"**Rejected:** {pos.get('rejected', 0)}")
+                            st.write(f"**Pending:** {pos.get('pending', 0)}")
+                else:
+                    st.error("Failed to load analytics")
         except Exception as e:
             st.error(f"Error loading analytics: {str(e)}")
 
