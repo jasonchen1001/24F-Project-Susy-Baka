@@ -81,12 +81,18 @@ def SideBarLinks(show_home=False):
         elif st.session_state["role"] == "Maintenance_Staff":
             MaintenanceHomeNav()
             SystemMonitoringNav()
-
-    # Always show About page
+    
     AboutPageNav()
+
+    # Ensure session state keys are initialized
+    if "role" not in st.session_state:
+        st.session_state["role"] = None
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
 
     # Logout button
     if st.sidebar.button("Logout"):
-        del st.session_state["role"]
-        del st.session_state["authenticated"]
-        st.switch_page("Home.py")
+        st.session_state["role"] = None
+        st.session_state["authenticated"] = False
+        # Use st.write to simulate a redirect by providing a link
+        st.write("<script>location.reload()</script>", unsafe_allow_html=True)

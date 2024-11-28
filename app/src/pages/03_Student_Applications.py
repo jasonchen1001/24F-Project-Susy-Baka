@@ -11,81 +11,87 @@ if not st.session_state.get("authenticated") or st.session_state.get("role") != 
     st.error("Please login as a Student to access this page.")
     st.stop()
 
-user_id = 1  # 固定用户1
+user_id = 1  
 
-# 创建选项卡
 tabs = st.tabs(["Active Applications", "Application History", "Available Positions"])
 
 # Active Applications Tab
 with tabs[0]:
     st.write("### Current Applications")
     
-    response = requests.get(f"http://localhost:4000/api/student/{user_id}/applications/active")
-    if response.status_code == 200:
-        active_apps = response.json()
-        
-        for app in active_apps:
-            with st.expander(f"{app['position_title']} at {app['company_name']}"):
-                st.write(f"**Status:** {app['status']}")
-                st.write(f"**Applied:** {app['sent_on']}")
-                st.write(f"**Position Description:** {app['description']}")
-                st.write(f"**Requirements:** {app['requirements']}")
+    try:
+        with st.spinner("Loading active applications..."):
+            response = requests.get(f"http://web-api:4000/student/{user_id}/applications/active")
+            if response.status_code == 200:
+                active_apps = response.json()
+                
+                if not active_apps:
+                    st.info("No active applications found.")
+                else:
+                    for app in active_apps:
+                        position_title = app.get('position_title', 'Unknown Position')
+                        company_name = app.get('company_name', 'Unknown Company')
+                        position_description = app.get('position_description', 'No description available.')
+                        requirements = app.get('requirements', 'No requirements specified.')
+                        status = app.get('status', 'Unknown')
+                        sent_on = app.get('sent_on', 'Unknown Date')
+
+                        with st.expander(f"{position_title} at {company_name}"):
+                            st.write(f"**Status:** {status}")
+                            st.write(f"**Applied Date:** {sent_on}")
+                            st.write(f"**Position Description:** {position_description}")
+                            st.write(f"**Requirements:** {requirements}")
+
+            else:
+                st.error("Failed to load active applications.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
 
 # Application History Tab
 with tabs[1]:
     st.write("### Application History")
-    
-    response = requests.get(f"http://localhost:4000/api/student/{user_id}/applications/all")
-    if response.status_code == 200:
-        all_apps = response.json()
-        
-        # 创建数据框展示
-        df = pd.DataFrame(all_apps)
-        
-        # 状态筛选器
-        status_filter = st.multiselect(
-            "Filter by Status",
-            options=['Pending', 'Accepted', 'Rejected'],
-            default=['Pending', 'Accepted', 'Rejected']
-        )
-        
-        filtered_df = df[df['status'].isin(status_filter)]
-        st.dataframe(filtered_df, use_container_width=True)
-        
-        # 统计图表
-        st.write("### Application Statistics")
-        status_counts = df['status'].value_counts()
-        st.bar_chart(status_counts)
+    try:
+        with st.spinner("Loading application history..."):
+            response = requests.get(f"http://web-api:4000/student/{user_id}/applications/history")
+            if response.status_code == 200:
+                application_history = response.json()
+
+                if not application_history:
+                    st.info("No application history found.")
+                else:
+                    for app in application_history:
+                        with st.expander(f"{app.get('position_title')} at {app.get('company_name')}"):
+                            st.write(f"**Status:** {app.get('status', 'Unknown')}")
+                            st.write(f"**Applied Date:** {app.get('sent_on', 'Unknown Date')}")
+                            st.write(f"**Position Description:** {app.get('position_description', 'No description available.')}")
+                            st.write(f"**Requirements:** {app.get('requirements', 'No requirements specified.')}")
+            else:
+                st.error("Failed to load application history.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+
+
 
 # Available Positions Tab
 with tabs[2]:
-    st.write("### Available Internship Positions")
-    
-    response = requests.get("http://localhost:4000/api/internships/active")
-    if response.status_code == 200:
-        positions = response.json()
-        
-        for position in positions:
-            with st.expander(f"{position['title']} - {position['hr_name']}"):
-                st.write(f"**Description:** {position['description']}")
-                st.write(f"**Requirements:** {position['requirements']}")
-                st.write(f"**Posted Date:** {position['posted_date']}")
-                
-                # 检查是否已申请
-                check_response = requests.get(
-                    f"http://localhost:4000/api/student/{user_id}/application/check/{position['position_id']}"
-                )
-                
-                if check_response.status_code == 200:
-                    if not check_response.json()['applied']:
-                        if st.button("Apply Now", key=position['position_id']):
-                            apply_response = requests.post(
-                                f"http://localhost:4000/api/student/{user_id}/application/submit",
-                                json={"position_id": position['position_id']}
-                            )
-                            if apply_response.status_code == 200:
-                                st.success("Application submitted successfully!")
-                            else:
-                                st.error("Failed to submit application")
-                    else:
-                        st.info("Already applied to this position")
+    st.write("### Available Positions")
+    try:
+        with st.spinner("Loading available positions..."):
+            response = requests.get(f"http://web-api:4000/student/{user_id}/applications/positions")
+            if response.status_code == 200:
+                available_positions = response.json()
+
+                if not available_positions:
+                    st.info("No available positions found.")
+                else:
+                    for position in available_positions:
+                        with st.expander(f"{position.get('position_title')} at {position.get('company_name')}"):
+                            st.write(f"**Status:** {position.get('status', 'Unknown')}")
+                            st.write(f"**Posted Date:** {position.get('posted_date', 'Unknown Date')}")
+                            st.write(f"**Position Description:** {position.get('position_description', 'No description available.')}")
+                            st.write(f"**Requirements:** {position.get('requirements', 'No requirements specified.')}")
+            else:
+                st.error("Failed to load available positions.")
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")

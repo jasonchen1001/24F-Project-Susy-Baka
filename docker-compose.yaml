@@ -6,6 +6,8 @@ services:
     volumes: ['./app/src:/appcode']
     ports:
       - 8501:8501
+    networks:
+      - app-network
 
   api:
     build: ./api
@@ -14,6 +16,8 @@ services:
     volumes: ['./api:/apicode']
     ports:
       - 4000:4000
+    networks:
+      - app-network
 
   db:
     env_file:
@@ -25,5 +29,11 @@ services:
       - ./database-files:/docker-entrypoint-initdb.d/:ro
     ports:
       - 3200:3306
+    networks:
+      - app-network
 
 
+
+networks:
+  app-network:
+    driver: bridge

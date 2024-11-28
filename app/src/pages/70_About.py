@@ -8,11 +8,12 @@ st.write("# About this App")
 
 st.markdown (
     """
-    This is a demo app for CS 3200 Course Project.  
+    Welcome to the Student Career Management App!
 
-    The goal of this demo is to provide information on the tech stack 
-    being used as well as demo some of the features of the various platforms. 
+    This application is designed to streamline the recruitment process for students and recruiters.
 
-    Stay tuned for more information and features to come!
+    Explore features such as tracking job applications, managing resumes, exploring internship opportunities, and viewing personalized career insights.
+
+    Stay tuned for more updates and features to enhance your recruitment experience!
     """
         )

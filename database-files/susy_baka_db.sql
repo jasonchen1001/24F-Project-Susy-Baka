@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS grade_record (
     recorded_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     recorded_by INT,
     FOREIGN KEY (recorded_by) REFERENCES school_admin(admin_id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES user(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS co_op_record (
@@ -39,7 +41,9 @@ CREATE TABLE IF NOT EXISTS co_op_record (
     end_date DATE NOT NULL,
     approved_by INT,
     FOREIGN KEY (approved_by) REFERENCES school_admin(admin_id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES user(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS student (
@@ -50,18 +54,8 @@ CREATE TABLE IF NOT EXISTS student (
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS application (
-    application_id INT PRIMARY KEY,
-    user_id INT,
-    position_id INT,
-    sent_on DATE DEFAULT NULL,
-    status ENUM('Pending', 'Accepted', 'Rejected') NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES student(user_id)
-        ON DELETE CASCADE ON UPDATE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS resume (
-    resume_id INT PRIMARY KEY AUTO_INCREMENT,
+    resume_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     time_uploaded TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     doc_name VARCHAR(255),
@@ -73,9 +67,8 @@ CREATE TABLE IF NOT EXISTS resume (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-
 CREATE TABLE IF NOT EXISTS suggestion (
-    suggestion_id INT PRIMARY KEY,
+    suggestion_id INT AUTO_INCREMENT PRIMARY KEY,
     resume_id INT,
     time_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     suggestion_text TEXT,
@@ -88,9 +81,11 @@ CREATE TABLE IF NOT EXISTS hr_manager (
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     user_id INT NOT NULL UNIQUE,
+    company_name VARCHAR(100) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user(user_id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS internship_position (
     position_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -103,7 +98,17 @@ CREATE TABLE IF NOT EXISTS internship_position (
     FOREIGN KEY (hr_id) REFERENCES hr_manager(hr_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
-
+CREATE TABLE IF NOT EXISTS application (
+    application_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    position_id INT,
+    sent_on DATE DEFAULT NULL,
+    status ENUM('Pending', 'Accepted', 'Rejected') NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES student(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (position_id) REFERENCES internship_position(position_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
 CREATE TABLE IF NOT EXISTS maintenance_staff (
     staff_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL UNIQUE,
@@ -174,16 +179,6 @@ CREATE TABLE IF NOT EXISTS internship_analytics (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-ALTER TABLE application
-ADD CONSTRAINT fk_position
-FOREIGN KEY (position_id) REFERENCES internship_position(position_id)
-ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE application
-MODIFY COLUMN application_id INT AUTO_INCREMENT;
-
-ALTER TABLE suggestion
-MODIFY COLUMN suggestion_id INT AUTO_INCREMENT;
 
 -- Insert base user data
 INSERT INTO user (full_name, email, role, dob, gender) VALUES
@@ -246,8 +241,19 @@ FROM user
 WHERE role = 'School_Admin';
 
 -- HR Manager Table
-INSERT INTO hr_manager (user_id, full_name, email)
-SELECT user_id, full_name, email
+INSERT INTO hr_manager (user_id, full_name, email, company_name)
+SELECT
+    user_id,
+    full_name,
+    email,
+    CASE user_id
+        WHEN 29 THEN 'Google'
+        WHEN 30 THEN 'Amazon'
+        WHEN 31 THEN 'Microsoft'
+        WHEN 32 THEN 'Apple'
+        WHEN 33 THEN 'Meta'
+        ELSE 'Default Company'
+    END AS company_name
 FROM user
 WHERE role = 'HR_Manager';
 
@@ -278,11 +284,6 @@ INSERT INTO database_info (change_id, staff_id, name, version, type, last_update
 (4, 4, 'UserDB', '2.1', 'MySQL', '2023-09-15'),
 (5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
 
--- 先清空相关表的数据
-TRUNCATE TABLE grade_record;
-TRUNCATE TABLE co_op_record;
-TRUNCATE TABLE resume;
-truncate table suggestion;
 
 -- grade records
 INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
@@ -343,7 +344,6 @@ SELECT
         (SELECT FORMAT(grade, 2) FROM grade_record WHERE student_id = s.user_id)
     ) as education,
     CONCAT(
-        'Skills: ',
         ELT(FLOOR(RAND() * 6) + 1, 'Python', 'Java', 'C++', 'JavaScript', 'Ruby', 'PHP'),
         ', ',
         ELT(FLOOR(RAND() * 6) + 1, 'React', 'Angular', 'Vue.js', 'Node.js', 'Django', 'Flask'),
@@ -351,7 +351,6 @@ SELECT
         ELT(FLOOR(RAND() * 6) + 1, 'SQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'OracleDB', 'Redis')
     ) as skills,
     CONCAT(
-        'Projects: ',
         ELT(FLOOR(RAND() * 6) + 1,
             'Developed a Personal Finance Tracker App',
             'Built a Machine Learning Model for Sentiment Analysis',
@@ -361,7 +360,6 @@ SELECT
             'Optimized a Blog Website for SEO and Scalability')
     ) as projects,
     CONCAT(
-        'Internships: ',
         COALESCE(
             GROUP_CONCAT(
                 CONCAT(

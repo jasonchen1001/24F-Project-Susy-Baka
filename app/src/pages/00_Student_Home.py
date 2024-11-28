@@ -14,9 +14,12 @@ def load_student_metrics(user_id=1):
         response = requests.get(f"http://web-api:4000/student/{user_id}/metrics")
         if response.status_code == 200:
             metrics = response.json()
-            active_applications = metrics.get('active_applications', 0)
-            resume_versions = metrics.get('resume_versions', 0)
-            latest_coop = metrics.get('latest_coop', 'None')
+
+            # Correctly extract nested data
+            active_applications = metrics.get('active_applications', {}).get('active_applications', 0)
+            resume_versions = metrics.get('resume_versions', {}).get('resume_versions', 0)
+            latest_coop = metrics.get('latest_coop', {}).get('latest_coop', "None")
+
             return active_applications, resume_versions, latest_coop
         else:
             logger.error(f"API request failed with status code: {response.status_code}")
@@ -24,6 +27,7 @@ def load_student_metrics(user_id=1):
     except Exception as e:
         logger.error(f"Error loading metrics: {str(e)}")
         return 0, 0, "None"
+
 
 def main():
     # Authentication Check
@@ -57,7 +61,7 @@ def main():
 
         with col2:
             st.subheader("Your Career Overview")
-            col2a, col2b, col2c = st.columns(3)
+            col2a, col2b, col2c = st.columns([2.5, 2, 2])
             with col2a:
                 st.metric("Active Applications", active_apps)
             with col2b:
