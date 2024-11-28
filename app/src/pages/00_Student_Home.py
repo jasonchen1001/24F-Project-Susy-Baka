@@ -1,46 +1,19 @@
 import streamlit as st
-from modules.nav import SideBarLinks
-import requests
-import logging
+# Page Title
+st.title("Student Dashboard")
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Description
+st.write("Welcome, Alice Johnson! Below are your tools for managing your account.")
 
-# Check authentication
-if 'authenticated' not in st.session_state or not st.session_state['authenticated']:
-    st.switch_page('Home.py')
+# Navigation Buttons
+if st.button("Manage Resumes"):
+    st.session_state["page"] = "01_Resume_Management"
+    st.experimental_rerun()
 
-# Display sidebar navigation
-SideBarLinks()
+if st.button("Manage Applications"):
+    st.session_state["page"] = "02_Application_Management"
+    st.experimental_rerun()
 
-st.title(f"Welcome, {st.session_state['first_name']}!")
-st.write("### Student Dashboard")
-
-# Display Quick Stats
-col1, col2, col3 = st.columns(3)
-
-try:
-    # Get resume count
-    response = requests.get(f'http://web-api:4000/resumes')
-    resumes = response.json()
-    col1.metric("Total Resumes", len(resumes))
-
-    # Get application count
-    response = requests.get(f'http://web-api:4000/applications')
-    applications = response.json()
-    col2.metric("Total Applications", len(applications))
-
-    # Get notification count
-    response = requests.get(f'http://web-api:4000/notifications')
-    notifications = response.json()
-    col3.metric("New Notifications", len(notifications))
-
-except Exception as e:
-    st.error(f"Error fetching dashboard data: {str(e)}")
-
-st.markdown("""
-### Quick Actions
-- Manage your resumes and applications
-- View application status
-- Check notifications and suggestions
-""")
+if st.button("View Notifications"):
+    st.session_state["page"] = "03_Notifications"
+    st.experimental_rerun()

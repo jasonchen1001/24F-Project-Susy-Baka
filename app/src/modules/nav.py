@@ -1,11 +1,10 @@
 import streamlit as st
-
 #### ------------------------ General ------------------------
 def HomeNav():
     st.sidebar.page_link("Home.py", label="Home", icon="🏠")
 
 def AboutPageNav():
-    st.sidebar.page_link("pages/30_About.py", label="About", icon="ℹ️")
+    st.sidebar.page_link("pages/70_About.py", label="About", icon="ℹ️")
 
 #### ------------------------ Student Role ------------------------
 def StudentHomeNav():
