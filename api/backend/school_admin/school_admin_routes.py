@@ -1,14 +1,13 @@
-########################################################
-# School Administrator blueprint
+
 ########################################################
 from flask import Blueprint, request, jsonify, make_response, current_app
 from backend.db_connection import db
 
-admin = Blueprint('admin', __name__)
+school_admin = Blueprint('school_admin', __name__)
 
 #------------------------------------------------------------
 # Get list of all students (Story 1)
-@admin.route('/students', methods=['GET'])
+@school_admin.route('/students', methods=['GET'])
 def get_students():
     try:
         cursor = db.get_db().cursor()
@@ -25,7 +24,7 @@ def get_students():
 
 #------------------------------------------------------------
 # Add new student record (Story 1)
-@admin.route('/students', methods=['POST'])
+@school_admin.route('/students', methods=['POST'])
 def add_student():
     try:
         student_data = request.json
@@ -60,7 +59,7 @@ def add_student():
 
 #------------------------------------------------------------
 # Get specific student info (Story 1)
-@admin.route('/students/<user_id>', methods=['GET'])
+@school_admin.route('/students/<user_id>', methods=['GET'])
 def get_student(user_id):
     try:
         cursor = db.get_db().cursor()
@@ -84,7 +83,7 @@ def get_student(user_id):
 
 #------------------------------------------------------------
 # Update student info (Story 2)
-@admin.route('/students/<user_id>', methods=['PUT'])
+@school_admin.route('/students/<user_id>', methods=['PUT'])
 def update_student(user_id):
     try:
         student_data = request.json
@@ -118,7 +117,7 @@ def update_student(user_id):
 
 #------------------------------------------------------------
 # Delete student record (Story 4)
-@admin.route('/students/<user_id>', methods=['DELETE'])
+@school_admin.route('/students/<user_id>', methods=['DELETE'])
 def delete_student(user_id):
     try:
         cursor = db.get_db().cursor()
@@ -136,7 +135,7 @@ def delete_student(user_id):
 
 #------------------------------------------------------------
 # Get academic records (Story 1)
-@admin.route('/academic-records', methods=['GET'])
+@school_admin.route('/academic-records', methods=['GET'])
 def get_academic_records():
     try:
         cursor = db.get_db().cursor()
@@ -154,7 +153,7 @@ def get_academic_records():
 
 #------------------------------------------------------------
 # Create new academic record (Story 2)
-@admin.route('/academic-records', methods=['POST'])
+@school_admin.route('/academic-records', methods=['POST'])
 def create_academic_record():
     try:
         record_data = request.json
@@ -176,7 +175,7 @@ def create_academic_record():
 
 #------------------------------------------------------------
 # Get compliance reports (Story 3)
-@admin.route('/reports', methods=['GET'])
+@school_admin.route('/reports', methods=['GET'])
 def get_reports():
     try:
         cursor = db.get_db().cursor()
@@ -198,7 +197,7 @@ def get_reports():
 
 #------------------------------------------------------------
 # Generate new report (Story 3)
-@admin.route('/reports', methods=['POST'])
+@school_admin.route('/reports', methods=['POST'])
 def generate_report():
     try:
         report_data = request.json
@@ -233,7 +232,7 @@ def generate_report():
 
 #------------------------------------------------------------
 # Delete old report (Story 4)
-@admin.route('/reports/<report_id>', methods=['DELETE'])
+@school_admin.route('/reports/<report_id>', methods=['DELETE'])
 def delete_report(report_id):
     # Implementation would depend on how reports are stored
     # This is a placeholder implementation
@@ -245,7 +244,7 @@ def delete_report(report_id):
 
 #------------------------------------------------------------
 # Get performance analytics (Story 6)
-@admin.route('/analytics', methods=['GET'])
+@school_admin.route('/analytics', methods=['GET'])
 def get_analytics():
     try:
         cursor = db.get_db().cursor()
@@ -266,7 +265,7 @@ def get_analytics():
 
 #------------------------------------------------------------
 # Update analytics parameters (Story 6)
-@admin.route('/analytics', methods=['PUT'])
+@school_admin.route('/analytics', methods=['PUT'])
 def update_analytics():
     try:
         analytics_data = request.json
