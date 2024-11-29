@@ -1,13 +1,13 @@
 import streamlit as st
+import requests
 from modules.nav import SideBarLinks
 import logging
-import requests
-from datetime import datetime
 
+# Configure logging
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def show_application_review():
+def main():
     # Authentication Check
     if not st.session_state.get("authenticated") or st.session_state.get("role") != "HR_Manager":
         st.error("Please login as HR Manager to access this page.")
@@ -19,138 +19,145 @@ def show_application_review():
     if st.button("← Back to Home"):
         st.switch_page("pages/40_HR_Home.py")
     
-    st.divider()
-    
-    # Create tabs for different views
-    tab1, tab2, tab3 = st.tabs(["Pending Applications", "Review History", "Analytics"])
-    
+    # Create tabs
+    tabs = st.tabs(["Pending Applications", "Review History", "Analytics"])
+
     # Tab 1: Pending Applications
-    with tab1:
-        try:
-            with st.spinner("Loading pending applications..."):
+    with tabs[0]:
+        with st.spinner("Loading pending applications..."):
+            try:
                 response = requests.get("http://web-api:4000/hr/applications", params={"status": "Pending"})
                 if response.status_code == 200:
                     applications = response.json()
+                    positions = {}
                     
-                    if not applications:
-                        st.info("No pending applications to review.")
-                    
+                    # Group applications by position
                     for app in applications:
-                        with st.container():
-                            st.write(f"### Application #{app['application_id']}")
-                            col1, col2 = st.columns([3, 1])
+                        pos_id = app.get('position_id')
+                        if pos_id:
+                            if pos_id not in positions:
+                                positions[pos_id] = []
+                            positions[pos_id].append(app)
+                    
+                    if positions:
+                        st.write(f"### Found {len(applications)} pending applications")
+                        
+                        for pos_id, apps in positions.items():
+                            st.write(f"### {apps[0]['position_title']}")
                             
-                            with col1:
-                                st.write(f"**Applicant:** {app['full_name']}")
-                                st.write(f"**Email:** {app['email']}")
-                                st.write(f"**Position:** {app['position_title']}")
-                                st.write(f"**Applied:** {app['sent_on']}")
-                                
-                            with col2:
-                                if st.button("Accept", key=f"accept_{app['application_id']}", type="primary"):
-                                    with st.spinner("Processing..."):
-                                        response = requests.put(
-                                            f"http://web-api:4000/hr/applications/{app['application_id']}",
-                                            json={"status": "Accepted"}
-                                        )
-                                        if response.status_code == 200:
-                                            st.success("Application accepted!")
-                                            st.rerun()
-                                
-                                if st.button("Reject", key=f"reject_{app['application_id']}", type="secondary"):
-                                    with st.spinner("Processing..."):
-                                        response = requests.put(
-                                            f"http://web-api:4000/hr/applications/{app['application_id']}",
-                                            json={"status": "Rejected"}
-                                        )
-                                        if response.status_code == 200:
-                                            st.success("Application rejected!")
-                                            st.rerun()
-                            
-                            st.divider()
+                            for app in apps:
+                                with st.container():
+                                    col1, col2 = st.columns([3, 1])
+                                    with col1:
+                                        st.write(f"**Applicant:** {app['full_name']}")
+                                        st.write(f"**Email:** {app['email']}")
+                                        st.write(f"**Applied:** {app['sent_on']}")
+                                    
+                                    with col2:
+                                        if st.button("Accept", key=f"accept_{app['application_id']}", type="primary"):
+                                            response = requests.put(
+                                                f"http://web-api:4000/hr/applications/{app['application_id']}",
+                                                json={"status": "Accepted"}
+                                            )
+                                            if response.status_code == 200:
+                                                st.success("Application accepted!")
+                                                st.rerun()
+                                        
+                                        if st.button("Reject", key=f"reject_{app['application_id']}", type="secondary"):
+                                            response = requests.put(
+                                                f"http://web-api:4000/hr/applications/{app['application_id']}",
+                                                json={"status": "Rejected"}
+                                            )
+                                            if response.status_code == 200:
+                                                st.success("Application rejected!")
+                                                st.rerun()
+                                    st.divider()
+                    else:
+                        st.info("No pending applications to review.")
                 else:
                     st.error("Failed to load applications")
-        except Exception as e:
-            st.error(f"Error loading applications: {str(e)}")
-    
-    # Tab 2: Review History
-    with tab2:
-        try:
-            with st.spinner("Loading application history..."):
-                response = requests.get("http://web-api:4000/hr/applications", params={"status": "all"})
-                if response.status_code == 200:
-                    applications = response.json()
-                    
-                    # Create filters
-                    status_filter = st.selectbox(
-                        "Filter by Status",
-                        ["All", "Accepted", "Rejected", "Pending"]
-                    )
-                    
-                    filtered_apps = [
-                        app for app in applications
-                        if status_filter == "All" or app['status'] == status_filter
-                    ]
-                    
-                    if filtered_apps:
-                        # Display applications in a table
-                        st.write("### Application History")
-                        app_data = {
-                            "Applicant": [app['full_name'] for app in filtered_apps],
-                            "Position": [app['position_title'] for app in filtered_apps],
-                            "Applied Date": [app['sent_on'] for app in filtered_apps],
-                            "Status": [app['status'] for app in filtered_apps]
-                        }
-                        st.dataframe(app_data, use_container_width=True)
-                    else:
-                        st.info("No applications found with selected filters.")
-                else:
-                    st.error("Failed to load application history")
-        except Exception as e:
-            st.error(f"Error loading review history: {str(e)}")
-    
-    # Tab 3: Analytics
-    with tab3:
-        try:
-            with st.spinner("Loading analytics..."):
-                response = requests.get("http://web-api:4000/hr/analytics/positions")
-                if response.status_code == 200:
-                    analytics = response.json()
-                    
-                    total_applications = sum(pos.get('total_applications', 0) for pos in analytics)
-                    total_accepted = sum(pos.get('accepted', 0) for pos in analytics)
-                    total_rejected = sum(pos.get('rejected', 0) for pos in analytics)
-                    
-                    # Display overall metrics
-                    st.write("### Overall Application Metrics")
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Total Applications", total_applications)
-                    with col2:
-                        acceptance_rate = (total_accepted / total_applications * 100) if total_applications > 0 else 0
-                        st.metric("Acceptance Rate", f"{acceptance_rate:.1f}%")
-                    with col3:
-                        rejection_rate = (total_rejected / total_applications * 100) if total_applications > 0 else 0
-                        st.metric("Rejection Rate", f"{rejection_rate:.1f}%")
-                    with col4:
-                        st.metric("Pending Review", sum(pos.get('pending', 0) for pos in analytics))
-                    
-                    # Display per-position metrics
-                    st.write("### Position-wise Metrics")
-                    for pos in analytics:
-                        with st.expander(pos['title']):
-                            st.write(f"**Total Applications:** {pos.get('total_applications', 0)}")
-                            st.write(f"**Accepted:** {pos.get('accepted', 0)}")
-                            st.write(f"**Rejected:** {pos.get('rejected', 0)}")
-                            st.write(f"**Pending:** {pos.get('pending', 0)}")
-                else:
-                    st.error("Failed to load analytics")
-        except Exception as e:
-            st.error(f"Error loading analytics: {str(e)}")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
 
-def main():
-    SideBarLinks(show_home=True)
-    show_application_review()
+    # Tab 2: Review History
+    with tabs[1]:
+        try:
+            response = requests.get("http://web-api:4000/hr/applications")
+            if response.status_code == 200:
+                applications = response.json()
+                
+                status_filter = st.selectbox(
+                    "Filter by Status",
+                    ["All", "Accepted", "Rejected", "Pending"]
+                )
+                
+                # Filter applications
+                filtered_apps = applications if status_filter == "All" else [
+                    app for app in applications 
+                    if app.get('status', '').upper() == status_filter.upper()
+                ]
+                
+                if filtered_apps:
+                    # Display metrics
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Total", len(applications))
+                    with col2:
+                        st.metric("Accepted", sum(1 for app in applications if app.get('status') == 'Accepted'))
+                    with col3:
+                        st.metric("Rejected", sum(1 for app in applications if app.get('status') == 'Rejected'))
+                    
+                    # Display applications
+                    for app in filtered_apps:
+                        st.write(f"### {app['full_name']} - {app['position_title']}")
+                        st.write(f"**Status:** {app.get('status', 'Unknown')}")
+                        st.write(f"**Applied:** {app.get('sent_on', 'Unknown')}")
+                        st.divider()
+                else:
+                    st.info(f"No applications found with status: {status_filter}")
+            else:
+                st.error("Failed to load applications")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
+
+    # Tab 3: Analytics
+    with tabs[2]:
+        try:
+            response = requests.get("http://web-api:4000/hr/analytics/positions")
+            if response.status_code == 200:
+                analytics = response.json()
+                
+                # Overall metrics
+                total = sum(int(pos.get('total_applications', 0)) for pos in analytics)
+                accepted = sum(int(pos.get('accepted', 0)) for pos in analytics)
+                rejected = sum(int(pos.get('rejected', 0)) for pos in analytics)
+                
+                st.write("### Overall Metrics")
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Total Applications", total)
+                with col2:
+                    st.metric("Accepted", accepted)
+                with col3:
+                    st.metric("Rejected", rejected)
+                with col4:
+                    st.metric("Pending", total - accepted - rejected)
+                
+                # Position-wise metrics
+                st.write("### Position-wise Metrics")
+                for pos in analytics:
+                    with st.expander(pos['title']):
+                        pos_total = int(pos.get('total_applications', 0))
+                        if pos_total > 0:
+                            st.metric("Total Applications", pos_total)
+                            st.write(f"Accepted: {int(pos.get('accepted', 0))}")
+                            st.write(f"Rejected: {int(pos.get('rejected', 0))}")
+                            st.write(f"Pending: {int(pos.get('pending', 0))}")
+            else:
+                st.error("Failed to load analytics")
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
 
 if __name__ == "__main__":
+    SideBarLinks(show_home=True)
     main()

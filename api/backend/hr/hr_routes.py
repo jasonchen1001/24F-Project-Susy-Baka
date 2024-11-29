@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify, make_response
 from backend.db_connection import db
+import logging
+from datetime import datetime
 
 hr_bp = Blueprint('hr', __name__)
+logger = logging.getLogger(__name__)
 
 # Position Management Routes
 @hr_bp.route('/internships', methods=['GET'])
@@ -13,11 +16,13 @@ def get_internships():
             SELECT ip.*, COUNT(a.application_id) as application_count
             FROM internship_position ip
             LEFT JOIN application a ON ip.position_id = a.position_id
-            GROUP BY ip.position_id
+            GROUP BY ip.position_id, ip.title, ip.description, ip.requirements, 
+                     ip.status, ip.posted_date, ip.hr_id
         ''')
         positions = cursor.fetchall()
         return make_response(jsonify(positions), 200)
     except Exception as e:
+        logger.error(f"Error getting internships: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 @hr_bp.route('/internships', methods=['POST'])
@@ -41,40 +46,7 @@ def add_internship():
         return make_response(jsonify({'message': 'Position added successfully'}), 201)
     except Exception as e:
         db.get_db().rollback()
-        return make_response(jsonify({'error': str(e)}), 500)
-
-@hr_bp.route('/internships/<int:position_id>', methods=['PUT'])
-def update_internship(position_id):
-    """Update an existing internship position"""
-    try:
-        position_info = request.json
-        query = '''UPDATE internship_position 
-                   SET title = %s, description = %s, requirements = %s, status = %s
-                   WHERE position_id = %s'''
-        cursor = db.get_db().cursor()
-        cursor.execute(query, (
-            position_info['title'],
-            position_info['description'],
-            position_info['requirements'],
-            position_info['status'],
-            position_id
-        ))
-        db.get_db().commit()
-        return make_response(jsonify({'message': 'Position updated successfully'}), 200)
-    except Exception as e:
-        db.get_db().rollback()
-        return make_response(jsonify({'error': str(e)}), 500)
-
-@hr_bp.route('/internships/<int:position_id>', methods=['DELETE'])
-def delete_internship(position_id):
-    """Delete an internship position"""
-    try:
-        cursor = db.get_db().cursor()
-        cursor.execute('DELETE FROM internship_position WHERE position_id = %s', (position_id,))
-        db.get_db().commit()
-        return make_response(jsonify({'message': 'Position deleted successfully'}), 200)
-    except Exception as e:
-        db.get_db().rollback()
+        logger.error(f"Error adding internship: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 # Application Management Routes
@@ -82,18 +54,45 @@ def delete_internship(position_id):
 def get_applications():
     """Get applications with optional status filter"""
     try:
-        status = request.args.get('status', 'Pending')
+        status = request.args.get('status')
         cursor = db.get_db().cursor()
-        cursor.execute('''
-            SELECT a.*, s.full_name, s.email, ip.title as position_title
-            FROM application a
-            JOIN student s ON a.user_id = s.user_id
-            JOIN internship_position ip ON a.position_id = ip.position_id
-            WHERE a.status = %s
-        ''', (status,))
+        
+        if status and status != "all":
+            query = '''
+                WITH RankedApplications AS (
+                    SELECT a.*,
+                           ROW_NUMBER() OVER (PARTITION BY a.user_id, a.position_id 
+                                            ORDER BY a.sent_on DESC) as rn
+                    FROM application a
+                    WHERE a.status = %s
+                )
+                SELECT DISTINCT ra.*, s.full_name, s.email, ip.title as position_title
+                FROM RankedApplications ra
+                JOIN student s ON ra.user_id = s.user_id
+                JOIN internship_position ip ON ra.position_id = ip.position_id
+                WHERE ra.rn = 1
+            '''
+            cursor.execute(query, (status,))
+        else:
+            query = '''
+                WITH RankedApplications AS (
+                    SELECT a.*,
+                           ROW_NUMBER() OVER (PARTITION BY a.user_id, a.position_id 
+                                            ORDER BY a.sent_on DESC) as rn
+                    FROM application a
+                )
+                SELECT DISTINCT ra.*, s.full_name, s.email, ip.title as position_title
+                FROM RankedApplications ra
+                JOIN student s ON ra.user_id = s.user_id
+                JOIN internship_position ip ON ra.position_id = ip.position_id
+                WHERE ra.rn = 1
+            '''
+            cursor.execute(query)
+            
         applications = cursor.fetchall()
         return make_response(jsonify(applications), 200)
     except Exception as e:
+        logger.error(f"Error getting applications: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 @hr_bp.route('/applications/<int:application_id>', methods=['PUT'])
@@ -101,16 +100,39 @@ def update_application_status(application_id):
     """Update application status"""
     try:
         status = request.json['status']
+        logger.info(f"Updating application {application_id} to status: {status}")
+        
         cursor = db.get_db().cursor()
         cursor.execute('''
             UPDATE application 
-            SET status = %s 
+            SET status = %s,
+                sent_on = CURRENT_TIMESTAMP
             WHERE application_id = %s
         ''', (status, application_id))
         db.get_db().commit()
-        return make_response(jsonify({'message': 'Application status updated'}), 200)
+        
+        # Verify update
+        cursor.execute('''
+            SELECT a.*, s.full_name, ip.title as position_title
+            FROM application a
+            JOIN student s ON a.user_id = s.user_id
+            JOIN internship_position ip ON a.position_id = ip.position_id
+            WHERE a.application_id = %s
+        ''', (application_id,))
+        
+        result = cursor.fetchone()
+        if result:
+            logger.info(f"Successfully updated application {application_id} to {status}")
+            return make_response(jsonify({
+                'message': 'Application status updated',
+                'application': result
+            }), 200)
+        else:
+            logger.error(f"Application {application_id} not found after update")
+            return make_response(jsonify({'error': 'Application not found'}), 404)
     except Exception as e:
         db.get_db().rollback()
+        logger.error(f"Error updating application: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
 # Resume Management Routes
@@ -133,25 +155,9 @@ def get_resumes():
         resumes = cursor.fetchall()
         return make_response(jsonify(resumes), 200)
     except Exception as e:
+        logger.error(f"Error getting resumes: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
-@hr_bp.route('/resumes/<int:resume_id>/suggestions', methods=['POST'])
-def add_resume_suggestion(resume_id):
-    """Add a suggestion for a resume"""
-    try:
-        suggestion_text = request.json['suggestion_text']
-        cursor = db.get_db().cursor()
-        cursor.execute('''
-            INSERT INTO suggestion (resume_id, suggestion_text)
-            VALUES (%s, %s)
-        ''', (resume_id, suggestion_text))
-        db.get_db().commit()
-        return make_response(jsonify({'message': 'Suggestion added successfully'}), 201)
-    except Exception as e:
-        db.get_db().rollback()
-        return make_response(jsonify({'error': str(e)}), 500)
-
-# Analytics Routes
 @hr_bp.route('/analytics/positions', methods=['GET'])
 def get_position_analytics():
     """Get analytics for internship positions"""
@@ -167,9 +173,10 @@ def get_position_analytics():
                 SUM(CASE WHEN a.status = 'Pending' THEN 1 ELSE 0 END) as pending
             FROM internship_position ip
             LEFT JOIN application a ON ip.position_id = a.position_id
-            GROUP BY ip.position_id
+            GROUP BY ip.position_id, ip.title
         ''')
         analytics = cursor.fetchall()
         return make_response(jsonify(analytics), 200)
     except Exception as e:
+        logger.error(f"Error getting analytics: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
