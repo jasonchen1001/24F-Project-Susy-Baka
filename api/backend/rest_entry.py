@@ -2,6 +2,8 @@ from flask import Flask
 from backend.db_connection import db
 from backend.hr.hr_routes import hr_bp 
 from backend.student.student_routes import student
+from backend.maintenance.maintenance_routes import maintenance
+from backend.school_admin.school_admin_routes import school_admin
 import os
 from dotenv import load_dotenv
 
@@ -27,6 +29,9 @@ def create_app():
     app.logger.info('current_app(): registering blueprints with Flask app object.')   
     app.register_blueprint(hr_bp, url_prefix='/hr')  # 只注册 hr blueprint
     app.register_blueprint(student, url_prefix='/student')  # 只注册 student blueprint
+    app.register_blueprint(maintenance, url_prefix='/maintenance')  # 只注册 maintenance blueprint
+    app.register_blueprint(school_admin, url_prefix='/school_admin')  # 只注册 school_admin blueprint
+    
 
     return app
 
