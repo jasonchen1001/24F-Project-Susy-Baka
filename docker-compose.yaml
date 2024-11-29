@@ -24,6 +24,9 @@ services:
       - ./api/.env
     image: mysql:9
     container_name: mysql_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=project_susy_baka
     hostname: db
     volumes:
       - ./database-files:/docker-entrypoint-initdb.d/:ro
