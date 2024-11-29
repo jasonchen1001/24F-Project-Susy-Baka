@@ -1,88 +1,93 @@
 import streamlit as st
 import requests
-from modules.nav import SideBarLinks
-import logging
+import pandas as pd
+from datetime import datetime
 
-# Configure logging
-logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Page config
+st.title("Personal Information")
 
-def main():
-    # Authentication Check
-    if not st.session_state.get("authenticated") or st.session_state.get("role") != "Student":
-        st.error("Please login as a Student to access this page.")
-        st.stop()
+# Authentication Check
+if not st.session_state.get("authenticated") or st.session_state.get("role") != "Student":
+    st.error("Please login as a Student to access this page.")
+    st.stop()
 
-    st.title("Personal Information")
-    
-    user_id = 1  # 固定用户1
+user_id = st.session_state.get("user_id")
+tabs = st.tabs(["Basic Information", "Academic Records", "Co-op History"])
 
-    # 创建选项卡
-    tabs = st.tabs(["Basic Info", "Academic Records", "Co-op History"])
+# Basic Information Tab
+with tabs[0]:
+    with st.spinner("Loading personal information..."):
+        response = requests.get(f"http://web-api:4000/student/info/{user_id}")
+        
+    if response.status_code == 200:
+        info = response.json()
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("### Personal Details")
+            st.write(f"**Full Name:** {info.get('full_name', 'N/A')}")
+            st.write(f"**Email:** {info.get('email', 'N/A')}")
+            st.write(f"**Date of Birth:** {info.get('dob', 'N/A')}")
+            st.write(f"**Gender:** {info.get('gender', 'N/A')}")
+        
+        with col2:
+            st.write("### Academic Status")
+            st.write(f"**Student ID:** {info.get('user_id', 'N/A')}")
+            st.write(f"**Major:** Computer Science")
+            if info.get('education'):
+                st.write(f"**{info.get('education', 'N/A')}**")
+    else:
+        st.error("Failed to load personal information")
 
-    try:
-        # Basic Info Tab
-        with tabs[0]:
-            with st.spinner("Loading personal information..."):
-                response = requests.get(f"http://web-api:4000/student/info/1")
-                if response.status_code == 200:
-                    student_info = response.json()
+# Academic Records Tab
+with tabs[1]:
+    with st.spinner("Loading academic records..."):
+        response = requests.get(f"http://web-api:4000/student/{user_id}/grades")
+        
+    if response.status_code == 200:
+        grades = response.json()
+        st.write("### Academic Records")
+        
+        if grades:
+            df = pd.DataFrame(grades)
+            df['recorded_date'] = pd.to_datetime(df['recorded_date']).dt.strftime('%Y-%m-%d')
+            
+            df.columns = ['Course', 'Grade', 'Recorded Date', 'Recorded By']
+            
+            st.dataframe(df, hide_index=True)
+            if 'Grade' in df.columns:
+                st.write("### GPA Trend")
+                chart_data = df[['Recorded Date', 'Grade']].set_index('Recorded Date')
+                st.line_chart(chart_data)
+        else:
+            st.info("No academic records found")
 
-                     # 页面显示内容
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.write("### Personal Details")
-                        st.write(f"**Name:** {student_info.get('full_name', 'N/A')}")
-                        st.write(f"**Email:** {student_info.get('email', 'N/A')}")
-                        st.write(f"**Date of Birth:** {student_info.get('dob', 'N/A')}")
-                        st.write(f"**Gender:** {student_info.get('gender', 'N/A')}")
-                    with col2:
-                        st.write("### Additional Information")
-                        st.write(f"**Education:** {student_info.get('education', 'N/A')}")
-                        st.write(f"**Skills:** {student_info.get('skills', 'N/A')}")
-                        st.write(f"**Projects:** {student_info.get('projects', 'N/A')}")
-                        st.write(f"**Co-op:** {student_info.get('co_op', 'N/A')}")
-                else:
-                    st.error("Failed to load student information")
+# Co-op History Tab
+with tabs[2]:
+    with st.spinner("Loading co-op history..."):
+        response = requests.get(f"http://web-api:4000/student/{user_id}/coops")
+        
+    if response.status_code == 200:
+        coops = response.json()
+        st.write("### Co-op History")
+        
+        if coops:
+            df = pd.DataFrame(coops)
 
+            df['start_date'] = pd.to_datetime(df['start_date'], format='mixed').dt.strftime('%Y-%m-%d')
+            df['end_date'] = pd.to_datetime(df['end_date'], format='mixed').dt.strftime('%Y-%m-%d')
+            
+            df.columns = ['ID', 'Company', 'Start Date', 'End Date', 'Approved By']
 
-        # Academic Records Tab 同理
-        with tabs[1]:
-            with st.spinner("Loading academic records..."):
-                response = requests.get(f"http://web-api:4000/student/{user_id}/grades")
-                if response.status_code == 200:
-                    grades = response.json()
-                    
-                    st.write("### Academic Performance")
-                    for grade in grades:
-                        st.metric(
-                            label=grade.get('course_name', 'Unknown Course'),
-                            value=f"GPA: {grade.get('grade', 'N/A')}"
-                        )
-
-        # Co-op History Tab 同理
-        with tabs[2]:
-            with st.spinner("Loading co-op history..."):
-                response = requests.get(f"http://web-api:4000/student/{user_id}/coops")
-                if response.status_code == 200:
-                    coops = response.json()
-                    
-                    if not coops:
-                        st.info("No co-op history found.")
-                    else:
-                    # 显示 Co-op 数据
-                        st.write("### Co-op Experience")
-                        for coop in coops:
-                            with st.expander(f"{coop.get('company_name', 'Unknown Company')} - {coop.get('start_date', 'N/A')} to {coop.get('end_date', 'N/A')}"):
-                                st.write(f"**Company:** {coop.get('company_name', 'N/A')}")
-                                st.write(f"**Period:** {coop.get('start_date', 'N/A')} - {coop.get('end_date', 'N/A')}")
-                                st.write(f"**Approved By:** {coop.get('approved_by', 'N/A')}")
-                else:
-                    t.error(f"Failed to load co-op history. Status code: {response.status_code}")
-    except Exception as e:
-        logger.error(f"Error loading  {str(e)}")
-        st.error(f"An error occurred while loading the  {e}")
-
-if __name__ == "__main__":
-    SideBarLinks(show_home=True)
-    main()
+            df = df.drop('ID', axis=1)
+            st.dataframe(df, hide_index=True)
+            
+            st.write("### Co-op Timeline")
+            for coop in coops:
+                st.write(f"**{coop['company_name']}**")
+                st.write(f"_{pd.to_datetime(coop['start_date'], format='mixed').strftime('%Y-%m-%d')} to {pd.to_datetime(coop['end_date'], format='mixed').strftime('%Y-%m-%d')}_")
+                st.write(f"Approved by: {coop['approved_by']}")
+                st.write("---")
+        else:
+            st.info("No co-op records found")

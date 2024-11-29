@@ -159,33 +159,50 @@ def get_current_resume(user_id):
 # Update resume content
 @student.route('/<int:user_id>/resume', methods=['PUT'])
 def update_resume(user_id):
-    """Update the resume of a student"""
+    """Update the resume of a student (excluding education and co-op)"""
     try:
         resume_data = request.json
-        cursor = db.get_db().cursor()
         
+        # 获取当前简历数据
+        cursor = db.get_db().cursor()
+        cursor.execute('''
+            SELECT education, co_op 
+            FROM resume 
+            WHERE user_id = %s
+        ''', (user_id,))
+        current_resume = cursor.fetchone()
+        
+        if not current_resume:
+            return make_response(jsonify({'message': 'Resume not found'}), 404)
+        
+        # 确保 education 和 co-op 字段没有被修改
+        if ('education' in resume_data or 'co_op' in resume_data):
+            return make_response(
+                jsonify({'message': 'Education and Co-op fields can only be updated by School Admin'}),
+                403
+            )
+        
+        # 执行更新，只更新允许的字段
         cursor.execute('''
             UPDATE resume
-            SET doc_name = %s, education = %s, skills = %s, projects = %s, co_op = %s
+            SET skills = %s,
+                projects = %s,
+                doc_name = %s,
+                time_uploaded = CURRENT_TIMESTAMP
             WHERE user_id = %s
         ''', (
-            resume_data.get('doc_name'),
-            resume_data.get('education'),
             resume_data.get('skills'),
             resume_data.get('projects'),
-            resume_data.get('co_op'),
+            resume_data.get('doc_name'),
             user_id
         ))
         db.get_db().commit()
-
-        if cursor.rowcount == 0:
-            return make_response(jsonify({'message': 'Resume not found'}), 404)
-
         return make_response(jsonify({'message': 'Resume updated successfully'}), 200)
+        
     except Exception as e:
+        db.get_db().rollback()
         current_app.logger.error(f"Error in update_resume: {str(e)}")
-        return make_response(jsonify({'error': str(e)}), 500)
-
+        return make_response(jsonify({'message': 'Failed to update resume'}), 500)
 #------------------------------------------------------------
 # View resume suggestions
 @student.route('/<int:user_id>/resume/suggestions', methods=['GET'])

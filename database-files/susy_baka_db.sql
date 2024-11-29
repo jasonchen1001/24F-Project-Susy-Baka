@@ -2,6 +2,7 @@ DROP DATABASE IF EXISTS project_susy_baka;
 CREATE DATABASE project_susy_baka;
 USE project_susy_baka;
 
+-- Base tables
 CREATE TABLE IF NOT EXISTS user (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     full_name VARCHAR(100) NOT NULL,
@@ -86,7 +87,6 @@ CREATE TABLE IF NOT EXISTS hr_manager (
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
-
 CREATE TABLE IF NOT EXISTS internship_position (
     position_id INT AUTO_INCREMENT PRIMARY KEY,
     hr_id INT NOT NULL,
@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS internship_position (
     FOREIGN KEY (hr_id) REFERENCES hr_manager(hr_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS application (
     application_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -109,6 +110,7 @@ CREATE TABLE IF NOT EXISTS application (
     FOREIGN KEY (position_id) REFERENCES internship_position(position_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
+-- Maintenance related tables
 CREATE TABLE IF NOT EXISTS maintenance_staff (
     staff_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL UNIQUE,
@@ -178,7 +180,114 @@ CREATE TABLE IF NOT EXISTS internship_analytics (
     FOREIGN KEY (position_id) REFERENCES internship_position(position_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
+-- Triggers for resume synchronization
+DELIMITER //
 
+CREATE TRIGGER update_resume_after_grade_change
+AFTER INSERT ON grade_record
+FOR EACH ROW
+BEGIN
+    IF NEW.course_name = 'Computer Science Major GPA' THEN
+        UPDATE resume r
+        SET education = CONCAT(
+            'Bachelor of Science in Computer Science, GPA: ',
+            FORMAT(NEW.grade, 2)
+        )
+        WHERE r.user_id = NEW.student_id;
+    END IF;
+END//
+
+CREATE TRIGGER update_resume_grade_on_update
+AFTER UPDATE ON grade_record
+FOR EACH ROW
+BEGIN
+    IF NEW.course_name = 'Computer Science Major GPA' THEN
+        UPDATE resume r
+        SET education = CONCAT(
+            'Bachelor of Science in Computer Science, GPA: ',
+            FORMAT(NEW.grade, 2)
+        )
+        WHERE r.user_id = NEW.student_id;
+    END IF;
+END//
+
+CREATE TRIGGER update_resume_after_coop_change
+AFTER INSERT ON co_op_record
+FOR EACH ROW
+BEGIN
+    UPDATE resume r
+    SET co_op = (
+        SELECT GROUP_CONCAT(
+            CONCAT(
+                company_name,
+                ' (',
+                DATE_FORMAT(start_date, '%b %Y'),
+                ' - ',
+                DATE_FORMAT(end_date, '%b %Y'),
+                ')'
+            )
+            ORDER BY start_date DESC
+            SEPARATOR '; '
+        )
+        FROM co_op_record
+        WHERE student_id = NEW.student_id
+        GROUP BY student_id
+    )
+    WHERE r.user_id = NEW.student_id;
+END//
+
+CREATE TRIGGER update_resume_after_coop_update
+AFTER UPDATE ON co_op_record
+FOR EACH ROW
+BEGIN
+    UPDATE resume r
+    SET co_op = (
+        SELECT GROUP_CONCAT(
+            CONCAT(
+                company_name,
+                ' (',
+                DATE_FORMAT(start_date, '%b %Y'),
+                ' - ',
+                DATE_FORMAT(end_date, '%b %Y'),
+                ')'
+            )
+            ORDER BY start_date DESC
+            SEPARATOR '; '
+        )
+        FROM co_op_record
+        WHERE student_id = NEW.student_id
+        GROUP BY student_id
+    )
+    WHERE r.user_id = NEW.student_id;
+END//
+
+CREATE TRIGGER update_resume_after_coop_delete
+AFTER DELETE ON co_op_record
+FOR EACH ROW
+BEGIN
+    UPDATE resume r
+    SET co_op = COALESCE(
+        (SELECT GROUP_CONCAT(
+            CONCAT(
+                company_name,
+                ' (',
+                DATE_FORMAT(start_date, '%b %Y'),
+                ' - ',
+                DATE_FORMAT(end_date, '%b %Y'),
+                ')'
+            )
+            ORDER BY start_date DESC
+            SEPARATOR '; '
+        )
+        FROM co_op_record
+        WHERE student_id = OLD.student_id
+        GROUP BY student_id),
+        'No internship experience'
+    )
+    WHERE r.user_id = OLD.student_id;
+END//
+
+DELIMITER ;
 
 -- Insert base user data
 INSERT INTO user (full_name, email, role, dob, gender) VALUES
@@ -228,19 +337,17 @@ INSERT INTO user (full_name, email, role, dob, gender) VALUES
 ('Jennifer Hall', 'jennifer.h@maintenance.com', 'Maintenance_Staff', '1981-06-23', 'Female'),
 ('Daniel King', 'daniel.k@maintenance.com', 'Maintenance_Staff', '1977-12-09', 'Male');
 
--- Student Table
+-- Insert data into role-specific tables
 INSERT INTO student (user_id, full_name, email)
 SELECT user_id, full_name, email
 FROM user
 WHERE role = 'Student';
 
--- School Admin Table
 INSERT INTO school_admin (user_id, full_name, hire_date)
 SELECT user_id, full_name, DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 1825) DAY)
 FROM user
 WHERE role = 'School_Admin';
 
--- HR Manager Table
 INSERT INTO hr_manager (user_id, full_name, email, company_name)
 SELECT
     user_id,
@@ -257,35 +364,12 @@ SELECT
 FROM user
 WHERE role = 'HR_Manager';
 
--- Maintenance Staff Table
 INSERT INTO maintenance_staff (user_id, full_name)
 SELECT user_id, full_name
 FROM user
 WHERE role = 'Maintenance_Staff';
 
--- Internship Positions
-INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date) VALUES
-(1, 'Software Developer Intern', 'Develop and maintain web applications', 'Java, Spring Boot, SQL', 'Active', '2023-09-01'),
-(2, 'Frontend Developer Intern', 'Create responsive user interfaces', 'React, TypeScript, CSS', 'Active', '2023-09-05'),
-(3, 'Data Analyst Intern', 'Analyze business metrics and create reports', 'Python, SQL, Tableau', 'Active', '2023-09-10'),
-(4, 'Mobile Developer Intern', 'Develop mobile applications', 'Swift, Kotlin, Flutter', 'Active', '2023-09-15'),
-(5, 'DevOps Engineer Intern', 'Maintain CI/CD pipelines', 'Docker, Kubernetes, Jenkins', 'Active', '2023-09-20'),
-(1, 'QA Engineer Intern', 'Test software applications', 'Selenium, JUnit, TestNG', 'Active', '2023-09-25'),
-(2, 'Machine Learning Intern', 'Build and train ML models', 'Python, TensorFlow, PyTorch', 'Active', '2023-10-01'),
-(3, 'Cloud Engineer Intern', 'Manage cloud infrastructure', 'AWS, Azure, GCP', 'Active', '2023-10-05'),
-(4, 'Security Engineer Intern', 'Implement security measures', 'Network Security, Cryptography', 'Active', '2023-10-10'),
-(5, 'Database Engineer Intern', 'Design and optimize databases', 'MySQL, MongoDB, PostgreSQL', 'Active', '2023-10-15');
-
--- Database Info
-INSERT INTO database_info (change_id, staff_id, name, version, type, last_update) VALUES
-(1, 1, 'StudentDB', '1.0', 'MySQL', '2023-09-01'),
-(2, 2, 'ApplicationDB', '2.0', 'PostgreSQL', '2023-09-05'),
-(3, 3, 'ResumeDB', '1.5', 'MongoDB', '2023-09-10'),
-(4, 4, 'UserDB', '2.1', 'MySQL', '2023-09-15'),
-(5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
-
-
--- grade records
+-- Insert grade records
 INSERT INTO grade_record (student_id, course_name, grade, recorded_by)
 SELECT
     s.user_id,
@@ -295,54 +379,52 @@ SELECT
 FROM student s
 LIMIT 20;
 
--- coop record
-INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by)
-WITH company_list AS (
-    SELECT 'Google' as company_name UNION
-    SELECT 'Microsoft' UNION
-    SELECT 'Amazon' UNION
-    SELECT 'Apple' UNION
-    SELECT 'Meta' UNION
-    SELECT 'IBM' UNION
-    SELECT 'Intel' UNION
-    SELECT 'Salesforce' UNION
-    SELECT 'Adobe' UNION
-    SELECT 'Twitter' UNION
-    SELECT 'LinkedIn' UNION
-    SELECT 'Uber' UNION
-    SELECT 'Airbnb' UNION
-    SELECT 'Netflix' UNION
-    SELECT 'Oracle'
-),
-student_companies AS (
-    SELECT
-        s.user_id as student_id,
-        c.company_name,
-        ROW_NUMBER() OVER (PARTITION BY s.user_id ORDER BY RAND()) as rn
-    FROM student s
-    CROSS JOIN company_list c
-    WHERE s.user_id <= 20
-    AND RAND() < 0.3
-)
-SELECT
-    student_id,
-    company_name,
-    DATE_SUB(CURRENT_DATE, INTERVAL (180 + FLOOR(RAND() * 185)) DAY) as start_date,
-    DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 179) DAY) as end_date,
-    (SELECT admin_id FROM school_admin ORDER BY RAND() LIMIT 1) as approved_by
-FROM student_companies
-WHERE rn <= 3
-ORDER BY student_id, start_date DESC;
+-- Insert co-op records with non-overlapping dates
+-- 直接插入实习记录
+INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by) VALUES
+-- 学生1-5
+(1, 'Google', '2023-06-01', '2023-08-31', 1),
+(1, 'Microsoft', '2022-06-01', '2022-08-31', 2),
+(2, 'Amazon', '2023-06-01', '2023-08-31', 1),
+(3, 'Apple', '2023-06-01', '2023-08-31', 3),
+(3, 'TechStart Solutions', '2022-06-01', '2022-08-31', 2),
+(4, 'Meta', '2023-06-01', '2023-08-31', 4),
+(5, 'ByteCraft Solutions', '2023-06-01', '2023-08-31', 1),
+(5, 'Adobe', '2022-06-01', '2022-08-31', 3),
 
--- resume
-INSERT INTO resume (user_id, doc_name, education, skills, projects, co_op)
+-- 学生6-10
+(6, 'LinkedIn', '2023-06-01', '2023-08-31', 2),
+(6, 'Google', '2022-06-01', '2022-08-31', 1),
+(7, 'Salesforce', '2023-06-01', '2023-08-31', 4),
+(8, 'DataFlow Systems', '2023-06-01', '2023-08-31', 1),
+(8, 'Microsoft', '2022-06-01', '2022-08-31', 2),
+(9, 'Innovation Labs', '2023-06-01', '2023-08-31', 3),
+(10, 'Twitter', '2023-06-01', '2023-08-31', 2),
+
+-- 学生11-15
+(11, 'Amazon', '2023-06-01', '2023-08-31', 1),
+(11, 'SmartCode Inc', '2022-06-01', '2022-08-31', 4),
+(12, 'Apple', '2023-06-01', '2023-08-31', 2),
+(13, 'Meta', '2023-06-01', '2023-08-31', 3),
+(13, 'CloudMind Tech', '2022-06-01', '2022-08-31', 1),
+(14, 'Digital Frontiers', '2023-06-01', '2023-08-31', 4),
+(15, 'Adobe', '2023-06-01', '2023-08-31', 2),
+
+-- 学生16-20
+(16, 'Uber', '2023-06-01', '2023-08-31', 1),
+(16, 'WebFlow Systems', '2022-06-01', '2022-08-31', 3),
+(17, 'Salesforce', '2023-06-01', '2023-08-31', 2),
+(18, 'Agile Dynamics', '2023-06-01', '2023-08-31', 4),
+(18, 'LinkedIn', '2022-06-01', '2022-08-31', 1),
+(19, 'NextGen Software', '2023-06-01', '2023-08-31', 3),
+(20, 'Twitter', '2023-06-01', '2023-08-31', 2),
+(20, 'Innovation Labs', '2022-06-01', '2022-08-31', 4);
+
+-- Insert basic resume data
+INSERT INTO resume (user_id, doc_name, skills, projects)
 SELECT
     s.user_id,
-    CONCAT('resume_', s.user_id, '.pdf'),
-    CONCAT(
-        'Bachelor of Science in Computer Science, GPA: ',
-        (SELECT FORMAT(grade, 2) FROM grade_record WHERE student_id = s.user_id)
-    ) as education,
+    CONCAT('resume_', REPLACE(LOWER(s.full_name), ' ', '_'), '.pdf'),
     CONCAT(
         ELT(FLOOR(RAND() * 6) + 1, 'Python', 'Java', 'C++', 'JavaScript', 'Ruby', 'PHP'),
         ', ',
@@ -358,75 +440,78 @@ SELECT
             'Implemented an E-commerce Platform with Payment Integration',
             'Created a Social Media Platform for Hobby Communities',
             'Optimized a Blog Website for SEO and Scalability')
-    ) as projects,
-    CONCAT(
-        COALESCE(
-            GROUP_CONCAT(
-                CONCAT(
-                    cr.company_name,
-                    ' (',
-                    DATE_FORMAT(cr.start_date, '%M %Y'),
-                    ' - ',
-                    DATE_FORMAT(cr.end_date, '%M %Y'),
-                    ')'
-                )
-                ORDER BY cr.start_date DESC
-                SEPARATOR '; '
-            ),
-            'No internship experience'
-        )
-    ) as co_op
+    ) as projects
 FROM student s
-LEFT JOIN co_op_record cr ON s.user_id = cr.student_id
-WHERE s.user_id <= 20
-GROUP BY s.user_id;
+WHERE s.user_id <= 20;
 
--- suggestions
+-- Update resume education and co-op fields based on existing records
+UPDATE resume r
+INNER JOIN grade_record g ON r.user_id = g.student_id
+SET r.education = CONCAT(
+    'Bachelor of Science in Computer Science, GPA: ',
+    FORMAT(g.grade, 2)
+)
+WHERE g.course_name = 'Computer Science Major GPA';
+
+UPDATE resume r
+SET r.co_op = (
+    SELECT GROUP_CONCAT(
+        CONCAT(
+            c.company_name,
+            ' (',
+            DATE_FORMAT(c.start_date, '%b %Y'),
+            ' - ',
+            DATE_FORMAT(c.end_date, '%b %Y'),
+            ')'
+        )
+        ORDER BY c.start_date DESC
+        SEPARATOR '; '
+    )
+    FROM co_op_record c
+    WHERE c.student_id = r.user_id
+    GROUP BY c.student_id
+)
+WHERE r.user_id IN (SELECT DISTINCT student_id FROM co_op_record);
+
+-- Insert internship positions
+INSERT INTO internship_position (hr_id, title, description, requirements, status, posted_date) VALUES
+(1, 'Software Developer Intern', 'Develop and maintain web applications', 'Java, Spring Boot, SQL', 'Active', '2023-09-01'),
+(2, 'Frontend Developer Intern', 'Create responsive user interfaces', 'React, TypeScript, CSS', 'Active', '2023-09-05'),
+(3, 'Data Analyst Intern', 'Analyze business metrics and create reports', 'Python, SQL, Tableau', 'Active', '2023-09-10'),
+(4, 'Mobile Developer Intern', 'Develop mobile applications', 'Swift, Kotlin, Flutter', 'Active', '2023-09-15'),
+(5, 'DevOps Engineer Intern', 'Maintain CI/CD pipelines', 'Docker, Kubernetes, Jenkins', 'Active', '2023-09-20'),
+(1, 'QA Engineer Intern', 'Test software applications', 'Selenium, JUnit, TestNG', 'Active', '2023-09-25'),
+(2, 'Machine Learning Intern', 'Build and train ML models', 'Python, TensorFlow, PyTorch', 'Active', '2023-10-01'),
+(3, 'Cloud Engineer Intern', 'Manage cloud infrastructure', 'AWS, Azure, GCP', 'Active', '2023-10-05'),
+(4, 'Security Engineer Intern', 'Implement security measures', 'Network Security, Cryptography', 'Active', '2023-10-10'),
+(5, 'Database Engineer Intern', 'Design and optimize databases', 'MySQL, MongoDB, PostgreSQL', 'Active', '2023-10-15');
+
+-- Insert resume suggestions
 INSERT INTO suggestion (resume_id, suggestion_text) VALUES
 (1, 'Your GPA of 3.40 is competitive. Consider elaborating on specific modules or algorithms you implemented in the Task Management System. With experience at major tech companies, highlight any cross-team collaboration and quantifiable impacts from your projects.'),
-
 (2, 'Strong GPA of 3.62 shows academic excellence. For the blog optimization project, include specific metrics like improved load times or SEO rankings. With your MongoDB skills, mention any database optimization techniques you implemented.'),
-
 (3, 'Exceptional GPA of 3.85 is impressive. With your diverse internship experience across Salesforce, Google, and Intel, highlight how you applied your PHP and SQL skills in different enterprise environments. Include specific contributions to each company.'),
-
 (4, 'Consider highlighting how you used MongoDB in your social media platform project. With experience at Airbnb, Apple, and Amazon, emphasize any scalability challenges you solved. Your 3.55 GPA demonstrates strong academic performance.'),
-
 (5, 'Your Angular and Java combination is valuable for enterprise development. With experience at LinkedIn and Microsoft, detail any feature implementations that impacted user engagement. Your 3.62 GPA strengthens your profile.'),
-
 (6, 'For your e-commerce platform, detail specific payment systems you integrated. Your Python and Django skills align well with your backend experience. Quantify the transaction volumes or performance improvements you achieved.'),
-
 (7, 'Strong technical foundation with C++ and Meta experience. Consider adding metrics about the Finance Tracker App\'s user base or performance. Detail how you used OracleDB for data management.'),
-
 (8, 'Focus on explaining the machine learning models you built, including accuracy rates and real-world applications. Your internships at Salesforce and IBM provide good enterprise experience - highlight specific projects and their impact.'),
-
 (9, 'In your e-commerce platform experience, quantify the scale of transactions processed. With Meta and Salesforce experience, highlight any cloud infrastructure or scalability improvements you implemented.'),
-
 (10, 'Your PHP and MySQL skills could be highlighted with specific performance optimizations. Detail the payment integration methods in your e-commerce project. Consider adding metrics from your Intel and Apple internships.'),
-
 (11, 'Highlight specific SEO improvements achieved in your blog optimization project. Your experience with Microsoft could be enhanced by mentioning specific technologies used. Consider adding metrics to demonstrate impact.'),
-
 (12, 'Strong mix of front-end and database skills. With experience at Microsoft and Oracle, highlight any enterprise-scale challenges you solved. Add specific examples of Node.js implementations.'),
-
 (13, 'Excellent 3.78 GPA shows strong academic foundation. For your social media platform, detail user engagement metrics or scalability solutions. Highlight specific contributions at Amazon and Apple.'),
-
 (14, 'Outstanding 3.81 GPA is a strong differentiator. Consider adding specific features you implemented in the Task Management System. Detail how you used Django and MySQL together for scalability.'),
-
 (15, 'Strong JavaScript and Redis expertise. For your e-commerce platform, include performance metrics and scalability solutions. Your Amazon experience could be enhanced with specific project outcomes.'),
-
 (16, 'Your experience with React and MongoDB is valuable. Add metrics about the Task Management System\'s user base or performance improvements. Detail specific contributions at Oracle and Microsoft.'),
-
 (17, 'Exceptional 3.95 GPA is remarkable. For your machine learning project, include accuracy rates and real-world applications. Highlight specific technologies used during your Intel and IBM internships.'),
-
 (18, 'Your Java and Angular skills align well with enterprise development. Detail specific features implemented in the Task Management System. Consider adding metrics from your Meta internship experience.'),
-
 (19, 'Strong Python and Django combination. Consider adding user metrics or performance improvements from your Task Management System. Detail specific projects at Airbnb and Salesforce.'),
-
 (20, 'Good balance of front-end and back-end skills. For your e-commerce platform, include transaction volumes or performance metrics. Highlight specific contributions at Adobe and LinkedIn.');
 
--- Applications
-INSERT INTO application (application_id, user_id, position_id, sent_on, status)
+-- Insert applications
+INSERT INTO application (user_id, position_id, sent_on, status)
 SELECT
-    ROW_NUMBER() OVER () as application_id,
     s.user_id,
     p.position_id,
     DATE_SUB(CURRENT_DATE, INTERVAL FLOOR(RAND() * 90) DAY),
@@ -434,7 +519,16 @@ SELECT
 FROM student s
 CROSS JOIN internship_position p
 LIMIT 120;
--- Data Alteration History
+
+-- Insert maintenance related data
+INSERT INTO database_info (change_id, staff_id, name, version, type, last_update) VALUES
+(1, 1, 'StudentDB', '1.0', 'MySQL', '2023-09-01'),
+(2, 2, 'ApplicationDB', '2.0', 'PostgreSQL', '2023-09-05'),
+(3, 3, 'ResumeDB', '1.5', 'MongoDB', '2023-09-10'),
+(4, 4, 'UserDB', '2.1', 'MySQL', '2023-09-15'),
+(5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
+
+-- Insert history records
 INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
 SELECT
     ELT(ROW_NUMBER() OVER () % 3 + 1, 'Schema Update', 'Data Migration', 'Index Rebuild'),
@@ -442,7 +536,6 @@ SELECT
     change_id
 FROM database_info;
 
--- Backup History
 INSERT INTO backup_history (type, backup_date, backup_type, details, change_id)
 SELECT
     ELT(ROW_NUMBER() OVER () % 2 + 1, 'Full', 'Incremental'),
@@ -452,7 +545,6 @@ SELECT
     change_id
 FROM database_info;
 
--- Alert History
 INSERT INTO alert_history (metrics, alerts, severity, database_id)
 SELECT
     'System Performance',
@@ -461,7 +553,6 @@ SELECT
     database_id
 FROM database_info;
 
--- Update History
 INSERT INTO update_history (update_type, update_date, details, change_id)
 SELECT
     'Version Update',
@@ -470,7 +561,6 @@ SELECT
     change_id
 FROM database_info;
 
--- Internship Analytics
 INSERT INTO internship_analytics (position_id, num_internships, average_apps, database_id)
 SELECT
     p.position_id,
@@ -480,3 +570,13 @@ SELECT
 FROM internship_position p
 CROSS JOIN database_info d
 LIMIT 30;
+
+UPDATE grade_record
+SET grade = 3.4
+WHERE student_id = 1 AND course_name = 'Computer Science Major GPA';
+
+UPDATE co_op_record
+SET company_name = 'Google',
+    start_date = '2023-03-01',
+    end_date = '2023-05-31'
+WHERE student_id = 1 AND company_name = 'Meta';
