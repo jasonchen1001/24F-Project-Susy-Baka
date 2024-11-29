@@ -96,3 +96,75 @@ def SideBarLinks(show_home=False):
         st.session_state["authenticated"] = False
         # Use st.write to simulate a redirect by providing a link
         st.write("<script>location.reload()</script>", unsafe_allow_html=True)
+
+        #### ------------------------ Maintenance Role ------------------------
+def MaintenanceHomeNav():
+    st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
+
+def AlertMonitorNav():
+    st.sidebar.page_link("pages/61_Alert_Monitor.py", label="Monitor Alerts", icon="🔔")
+
+def BackupManagerNav():
+    st.sidebar.page_link("pages/62_Backup_Manager.py", label="Backup Management", icon="💾")
+
+def AlertHistoryNav():
+    st.sidebar.page_link("pages/63_Alert_History.py", label="Alert History", icon="📋")
+
+def AlterationManagerNav():
+    st.sidebar.page_link("pages/64_Alteration_Manager.py", label="Data Alterations", icon="📝")
+
+def DatabaseManagerNav():
+    st.sidebar.page_link("pages/65_Database_Manager.py", label="Database Management", icon="🗃️")
+
+def SideBarLinks(show_home=False):
+    """
+    This function handles adding links to the sidebar based on user's role
+    """
+    # Add logo to sidebar
+    st.sidebar.image("assets/logo.png", width=150)
+
+    # If no logged in user, redirect to Home
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+        st.switch_page("Home.py")
+
+    if show_home:
+        HomeNav()
+
+    # Show role-specific navigation
+    if st.session_state["authenticated"]:
+        if st.session_state["role"] == "Student":
+            StudentHomeNav()
+            PersonalInfoNav()
+            ResumeManagementNav()
+            ApplicationManagementNav()
+        elif st.session_state["role"] == "School_Admin":
+            AdminHomeNav()
+            StudentRecordsNav()
+        elif st.session_state["role"] == "HR_Manager":
+            HRHomeNav()
+            InternshipNav()
+            ApplicationReviewNav()
+            ResumeScreenNav()
+        elif st.session_state["role"] == "Maintenance_Staff":
+            MaintenanceHomeNav()
+            AlertMonitorNav()
+            BackupManagerNav()
+            AlertHistoryNav()
+            AlterationManagerNav()
+            DatabaseManagerNav()
+    
+    AboutPageNav()
+
+    # Ensure session state keys are initialized
+    if "role" not in st.session_state:
+        st.session_state["role"] = None
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+    # Logout button
+    if st.sidebar.button("Logout"):
+        st.session_state["role"] = None
+        st.session_state["authenticated"] = False
+        # Use st.write to simulate a redirect by providing a link
+        st.write("<script>location.reload()</script>", unsafe_allow_html=True)

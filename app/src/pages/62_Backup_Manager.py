@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def load_performance_data():
     try:
-        response = requests.get('http://localhost:5000/api/system/performance')
+        response = requests.get('http://localhost:4000/api/system/performance')
         if response.status_code == 200:
             data = response.json()
             return pd.DataFrame(data)
@@ -79,7 +79,7 @@ def show_performance_monitor():
             try:
                 database_id = df[df['database_name'] == selected_database]['database_id'].iloc[0]
                 response = requests.put(
-                    'http://localhost:5000/api/system/performance',
+                    'http://localhost:4000/api/system/performance',
                     json={
                         'database_id': database_id,
                         'metrics': metrics,

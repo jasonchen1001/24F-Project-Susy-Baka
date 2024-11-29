@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def load_backup_history():
     try:
         # Replace with your actual API endpoint
-        response = requests.get('http://localhost:5000/api/system/backups')
+        response = requests.get('http://localhost:4000/api/system/backups')
         if response.status_code == 200:
             data = response.json()
             return pd.DataFrame(data)
@@ -69,7 +69,7 @@ def show_backup_manager():
             if st.form_submit_button("Create Backup"):
                 try:
                     response = requests.post(
-                        'http://localhost:5000/api/system/backups',
+                        'http://localhost:4000/api/system/backups',
                         json={
                             'type': backup_type,
                             'schedule': schedule,
@@ -123,7 +123,7 @@ def show_backup_manager():
                     if st.button('Delete', key=f'delete_{idx}'):
                         try:
                             response = requests.delete(
-                                f'http://localhost:5000/api/system/backups/{row["id"]}'
+                                f'http://localhost:4000/api/system/backups/{row["id"]}'
                             )
                             if response.status_code == 200:
                                 st.success("Backup deleted successfully!")
