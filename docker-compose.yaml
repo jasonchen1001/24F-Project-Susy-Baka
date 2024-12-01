@@ -18,6 +18,7 @@ services:
       - 4000:4000
     networks:
       - app-network
+    
 
   db:
     env_file:

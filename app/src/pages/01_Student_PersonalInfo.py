@@ -57,10 +57,7 @@ with tabs[1]:
             df.columns = ['Course', 'Grade', 'Recorded Date', 'Recorded By']
             
             st.dataframe(df, hide_index=True)
-            if 'Grade' in df.columns:
-                st.write("### GPA Trend")
-                chart_data = df[['Recorded Date', 'Grade']].set_index('Recorded Date')
-                st.line_chart(chart_data)
+            
         else:
             st.info("No academic records found")
 
