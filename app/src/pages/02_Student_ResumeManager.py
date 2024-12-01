@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+from modules.nav import SideBarLinks
 
 # Page config
 st.title("Resume Management")
@@ -109,3 +110,7 @@ with tabs[2]:  # Resume Suggestions
                 st.write(f"- {suggestion.get('suggestion_text', 'No suggestion text')}")
         else:
             st.error("Failed to load resume suggestions")
+def main():
+    SideBarLinks(show_home=True)
+if __name__ == "__main__":
+    main()

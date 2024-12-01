@@ -120,16 +120,14 @@ CREATE TABLE IF NOT EXISTS maintenance_staff (
 );
 
 CREATE TABLE IF NOT EXISTS database_info (
-    database_id INT NOT NULL AUTO_INCREMENT,
-    change_id INT NOT NULL,
+    database_id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    
     staff_id INT NOT NULL,
     name VARCHAR(100),
     version VARCHAR(20),
     type VARCHAR(50),
     last_update DATE,
-    PRIMARY KEY (database_id, change_id),
-    UNIQUE (database_id),
-    UNIQUE (change_id),
+    
     FOREIGN KEY (staff_id) REFERENCES maintenance_staff(staff_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -137,8 +135,8 @@ CREATE TABLE IF NOT EXISTS database_info (
 CREATE TABLE IF NOT EXISTS data_alteration_history (
     alteration_type VARCHAR(100),
     alteration_date DATE,
-    change_id INT NOT NULL,
-    FOREIGN KEY (change_id) REFERENCES database_info(change_id)
+    database_id INT NOT NULL,
+    FOREIGN KEY (database_id) REFERENCES database_info(database_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -147,8 +145,8 @@ CREATE TABLE IF NOT EXISTS backup_history (
     backup_date DATE,
     backup_type VARCHAR(100),
     details VARCHAR(255),
-    change_id INT NOT NULL,
-    FOREIGN KEY (change_id) REFERENCES database_info(change_id)
+    database_id INT NOT NULL,
+    FOREIGN KEY (database_id) REFERENCES database_info(database_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -165,8 +163,8 @@ CREATE TABLE IF NOT EXISTS update_history (
     update_type VARCHAR(100),
     update_date DATE,
     details VARCHAR(255),
-    change_id INT NOT NULL,
-    FOREIGN KEY (change_id) REFERENCES database_info(change_id)
+    database_id INT NOT NULL,
+    FOREIGN KEY (database_id) REFERENCES database_info(database_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -380,9 +378,9 @@ FROM student s
 LIMIT 20;
 
 -- Insert co-op records with non-overlapping dates
--- 直接插入实习记录
+
 INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approved_by) VALUES
--- 学生1-5
+
 (1, 'Google', '2023-06-01', '2023-08-31', 1),
 (1, 'Microsoft', '2022-06-01', '2022-08-31', 2),
 (2, 'Amazon', '2023-06-01', '2023-08-31', 1),
@@ -392,7 +390,7 @@ INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approv
 (5, 'ByteCraft Solutions', '2023-06-01', '2023-08-31', 1),
 (5, 'Adobe', '2022-06-01', '2022-08-31', 3),
 
--- 学生6-10
+
 (6, 'LinkedIn', '2023-06-01', '2023-08-31', 2),
 (6, 'Google', '2022-06-01', '2022-08-31', 1),
 (7, 'Salesforce', '2023-06-01', '2023-08-31', 4),
@@ -401,7 +399,7 @@ INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approv
 (9, 'Innovation Labs', '2023-06-01', '2023-08-31', 3),
 (10, 'Twitter', '2023-06-01', '2023-08-31', 2),
 
--- 学生11-15
+
 (11, 'Amazon', '2023-06-01', '2023-08-31', 1),
 (11, 'SmartCode Inc', '2022-06-01', '2022-08-31', 4),
 (12, 'Apple', '2023-06-01', '2023-08-31', 2),
@@ -410,7 +408,7 @@ INSERT INTO co_op_record (student_id, company_name, start_date, end_date, approv
 (14, 'Digital Frontiers', '2023-06-01', '2023-08-31', 4),
 (15, 'Adobe', '2023-06-01', '2023-08-31', 2),
 
--- 学生16-20
+
 (16, 'Uber', '2023-06-01', '2023-08-31', 1),
 (16, 'WebFlow Systems', '2022-06-01', '2022-08-31', 3),
 (17, 'Salesforce', '2023-06-01', '2023-08-31', 2),
@@ -521,7 +519,7 @@ CROSS JOIN internship_position p
 LIMIT 120;
 
 -- Insert maintenance related data
-INSERT INTO database_info (change_id, staff_id, name, version, type, last_update) VALUES
+INSERT INTO database_info (database_id, staff_id, name, version, type, last_update) VALUES
 (1, 1, 'StudentDB', '1.0', 'MySQL', '2023-09-01'),
 (2, 2, 'ApplicationDB', '2.0', 'PostgreSQL', '2023-09-05'),
 (3, 3, 'ResumeDB', '1.5', 'MongoDB', '2023-09-10'),
@@ -529,20 +527,20 @@ INSERT INTO database_info (change_id, staff_id, name, version, type, last_update
 (5, 5, 'AnalyticsDB', '1.2', 'PostgreSQL', '2023-09-20');
 
 -- Insert history records
-INSERT INTO data_alteration_history (alteration_type, alteration_date, change_id)
+INSERT INTO data_alteration_history (alteration_type, alteration_date, database_id)
 SELECT
     ELT(ROW_NUMBER() OVER () % 3 + 1, 'Schema Update', 'Data Migration', 'Index Rebuild'),
     DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
-    change_id
+    database_id
 FROM database_info;
 
-INSERT INTO backup_history (type, backup_date, backup_type, details, change_id)
+INSERT INTO backup_history (type, backup_date, backup_type, details, database_id)
 SELECT
     ELT(ROW_NUMBER() OVER () % 2 + 1, 'Full', 'Incremental'),
     DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
     ELT(ROW_NUMBER() OVER () % 2 + 1, 'Daily', 'Weekly'),
     'Regular scheduled backup',
-    change_id
+    database_id
 FROM database_info;
 
 INSERT INTO alert_history (metrics, alerts, severity, database_id)
@@ -553,12 +551,12 @@ SELECT
     database_id
 FROM database_info;
 
-INSERT INTO update_history (update_type, update_date, details, change_id)
+INSERT INTO update_history (update_type, update_date, details, database_id)
 SELECT
     'Version Update',
     DATE_SUB(CURRENT_DATE, INTERVAL ROW_NUMBER() OVER () DAY),
     'Regular system update',
-    change_id
+    database_id
 FROM database_info;
 
 INSERT INTO internship_analytics (position_id, num_internships, average_apps, database_id)
@@ -580,3 +578,13 @@ SET company_name = 'Google',
     start_date = '2023-03-01',
     end_date = '2023-05-31'
 WHERE student_id = 1 AND company_name = 'Meta';
+
+INSERT INTO maintenance_staff (user_id, full_name) 
+VALUES (1, 'Thomas Anderson') 
+ON DUPLICATE KEY UPDATE full_name = 'Thomas Anderson';
+
+INSERT INTO database_info (database_id, staff_id, name, version, type, last_update)
+VALUES (1, 1, 'Test Database', '1.0', 'MySQL', CURDATE());
+
+INSERT INTO backup_history (type, backup_date, backup_type, details, database_id)
+VALUES ('Full', CURDATE(), 'Daily', 'Backup of test database', 1);

@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+from modules.nav import SideBarLinks
 
 # Page config
 st.title("Personal Information")
@@ -88,3 +89,7 @@ with tabs[2]:
                 st.write("---")
         else:
             st.info("No co-op records found")
+def main():
+    SideBarLinks(show_home=True)
+if __name__ == "__main__":
+    main()

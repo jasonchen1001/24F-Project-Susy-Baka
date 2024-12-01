@@ -39,3 +39,6 @@ with col2:
     st.metric("Pending Approvals", "8")
     st.metric("Active Students", "156")
     st.metric("Recent Grade Updates", "12")
+if __name__ == "__main__":
+    SideBarLinks(show_home=True)
+    main()

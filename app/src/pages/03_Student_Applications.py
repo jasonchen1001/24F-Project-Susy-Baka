@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 from datetime import datetime
+from modules.nav import SideBarLinks
+
 
 # Page config
 st.title("Application Tracker")
@@ -95,3 +97,8 @@ with tabs[2]:
                 st.error("Failed to load available positions.")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
+        
+def main():
+    SideBarLinks(show_home=True)
+if __name__ == "__main__":
+    main()

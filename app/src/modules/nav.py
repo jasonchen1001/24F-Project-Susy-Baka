@@ -25,7 +25,7 @@ def AdminHomeNav():
     st.sidebar.page_link("pages/20_Admin_Home.py", label="Admin Dashboard", icon="👨‍💼")
 
 def StudentRecordsNav():
-    st.sidebar.page_link("pages/21_Student_Records.py", label="Student Records", icon="📚")
+    st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
 
 #### ------------------------ HR Role ------------------------
 def HRHomeNav():
@@ -48,48 +48,13 @@ def SystemMonitoringNav():
     st.sidebar.page_link("pages/61_System_Monitoring.py", label="Monitoring", icon="📊")
 
 
-def SideBarLinks(show_home=False):
-    """
-    This function handles adding links to the sidebar based on user's role
-    """
-    # Add logo to sidebar
-    st.sidebar.image("assets/logo.png", width=150)
-
-    # If no logged in user, redirect to Home
-    if "authenticated" not in st.session_state:
-        st.session_state.authenticated = False
-        st.switch_page("Home.py")
-
-    if show_home:
-        HomeNav()
-
-    # Show role-specific navigation
-    if st.session_state["authenticated"]:
-        if st.session_state["role"] == "Student":
-            StudentHomeNav()
-            PersonalInfoNav()
-            ResumeManagementNav()
-            ApplicationManagementNav()
-        elif st.session_state["role"] == "School_Admin":
-            AdminHomeNav()
-            StudentRecordsNav()
-        elif st.session_state["role"] == "HR_Manager":
-            HRHomeNav()
-            InternshipNav()
-            ApplicationReviewNav()
-            ResumeScreenNav()
-        elif st.session_state["role"] == "Maintenance_Staff":
-            MaintenanceHomeNav()
-            SystemMonitoringNav()
-    
-    AboutPageNav()
-
     # Ensure session state keys are initialized
     if "role" not in st.session_state:
         st.session_state["role"] = None
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
+<<<<<<< HEAD
     # Logout button
     if st.sidebar.button("LOGOUT"):
         st.session_state["role"] = None
@@ -97,6 +62,8 @@ def SideBarLinks(show_home=False):
         # Use st.write to simulate a redirect by providing a link
         st.write("<script>location.reload()</script>", unsafe_allow_html=True)
 
+=======
+>>>>>>> 6b6f7466010853b926c7527c0a7af86463c40083
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
@@ -162,9 +129,15 @@ def SideBarLinks(show_home=False):
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
+
+
+
+
     # Logout button
     if st.sidebar.button("Logout"):
+        # Reset session state 
         st.session_state["role"] = None
         st.session_state["authenticated"] = False
-        # Use st.write to simulate a redirect by providing a link
-        st.write("<script>location.reload()</script>", unsafe_allow_html=True)
+
+
+
