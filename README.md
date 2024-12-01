@@ -6,10 +6,11 @@ InternMatch is a data-driven platform designed to transform the way companies fi
 ---
 
 ## Team Members
-- **Jason Chen** - Full Stack Developer & Team Lead
-- **Alex Lee** - Backend Developer
-- **Sarah Wang** - Frontend Developer
-- **Michael Johnson** - Database Engineer
+- **Yanzhen Chen** - Github usename: jasonchen1001 - committed to the development of front-end web pages and back-end functions for students, and the production and modification of databases
+- **Rongxuan Zhang** - Github usename: RxZhang7
+- **Hanyun Cheng** - Github usename: AcceleratorBarry
+- **Yiyang Bai** - Github usename: Ilovetheirishbeer
+- **Luke Kreysar** - Github usename:
 
 ---
 
@@ -79,3 +80,122 @@ InternMatch is a data-driven platform designed to transform the way companies fi
 - RESTful API
 - MySQL database
 - Docker containerization
+
+
+---
+
+## Getting Started
+
+Follow these steps to set up and run the InternMatch platform on your local machine.
+
+---
+
+### Prerequisites
+
+Ensure the following tools are installed on your system:
+
+- **Docker & Docker Compose**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop).  
+  Verify installation with:
+  ```bash
+  docker compose version
+  ```
+- **Git**: Install [Git](https://git-scm.com/).  
+  Verify installation with:
+  ```bash
+  git --version
+  ```
+- **Python 3.x**: Required for local development and running scripts.  
+  Verify installation with:
+  ```bash
+  python --version
+  ```
+
+---
+
+### Step 1: Clone the Repository
+
+Clone the project repository using Git:
+
+```bash
+git clone https://github.com/jasonchen1001/24F-Project-Susy-Baka.git
+cd 24F-Project-Susy-Baka
+```
+
+---
+
+### Step 2: Configure Environment Variables
+
+Create a `.env` file in the root directory of the project and add the following configuration:
+
+```ini
+SECRET_KEY=someCrazyS3cR3T!Key.!
+DB_USER=root
+DB_HOST=db
+DB_PORT=3306
+DB_NAME=project_susy_baka
+MYSQL_ROOT_PASSWORD=123456
+```
+
+This file sets up environment variables required for secure database connections and application functionality.
+
+---
+
+### Step 3: Build and Start the Application
+
+Build and start the application using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This will:
+- Set up a **MySQL database** on port `3306`.
+- Start the **Flask API** backend on port `4000`.
+- Launch the **Streamlit frontend** on port `8501`.
+
+---
+
+### Step 4: Verify Installation
+
+To verify that all services are running correctly:
+
+```bash
+docker compose ps
+```
+
+You should see a list of running containers for the database, backend API, and frontend.
+
+---
+
+### Step 5: Access the Application
+
+Open your browser and access the application at:
+
+- **Frontend**: [http://localhost:8501](http://localhost:8501)  
+- **API**: [http://localhost:4000](http://localhost:4000)
+
+For database management, connect to the MySQL database using a client (port `3306`).
+
+---
+
+### Step 6: Stop the Application
+
+To stop the application and all running services:
+
+```bash
+docker compose down
+```
+
+---
+
+### Notes
+
+- The first startup may take some time due to Docker image builds and database initialization.
+- Regularly back up the database in production environments.
+- Change all default credentials in the `.env` file for security.
+- Use `docker logs <container-id>` to debug any issues during startup or runtime.
+
+---
+
+You are now ready to use InternMatch! If you encounter any issues, refer to the Troubleshooting section or contact the development team.
+```

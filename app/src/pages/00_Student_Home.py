@@ -35,7 +35,7 @@ def main():
         st.error("Please login as a Student to access this page.")
         st.stop()
 
-    st.title("Student Career Management")
+    st.title("Student Dashboard")
     st.write(f"Welcome, {st.session_state.get('first_name')}!")
     st.divider()
 

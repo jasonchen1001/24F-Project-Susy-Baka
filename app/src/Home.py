@@ -64,7 +64,7 @@ if st.button("Login as Thomas Anderson (Maintenance Staff)",
 # Add system description
 st.markdown("""
 ---
-### About the Student Career Management System
+### About the Intern Match
 
 This integrated platform helps:
 * **Students** manage resumes and track internship applications
