@@ -43,7 +43,7 @@ with tabs[0]:
                             st.write(f"**Requirements:** {requirements}")
 
             else:
-                st.error("Failed to load active applications.")
+                st.error("No active applications found.")
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
 

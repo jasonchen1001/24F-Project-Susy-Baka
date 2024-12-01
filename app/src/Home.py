@@ -13,7 +13,7 @@ st.session_state['authenticated'] = False
 SideBarLinks(show_home=True)
 
 logger.info("Loading the Home page of the app")
-st.title('Student Career Management System')
+st.title('Intern Match')
 st.write('\n\n')
 st.write('### Welcome! Please select your role to continue:')
 
