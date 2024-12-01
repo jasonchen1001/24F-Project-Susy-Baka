@@ -198,4 +198,3 @@ docker compose down
 ---
 
 You are now ready to use InternMatch! If you encounter any issues, refer to the Troubleshooting section or contact the development team.
-```
