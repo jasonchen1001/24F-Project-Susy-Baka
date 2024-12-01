@@ -86,9 +86,8 @@ with tabs[1]:  # Update Resume Tab
             )
             
             if update_response.status_code == 200:
-                st.success("✅ Resume updated successfully!")
-                time.sleep(1)  
-                st.experimental_rerun()  
+                st.success("✅ Resume updated successfully!") 
+                st.rerun()  
             elif update_response.status_code == 403:
                 st.error("❌ Education and Co-op fields can only be updated by School Admin")
             else:

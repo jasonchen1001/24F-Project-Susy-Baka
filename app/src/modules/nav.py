@@ -91,7 +91,7 @@ def SideBarLinks(show_home=False):
         st.session_state["authenticated"] = False
 
     # Logout button
-    if st.sidebar.button("Logout"):
+    if st.sidebar.button("LOGOUT"):
         st.session_state["role"] = None
         st.session_state["authenticated"] = False
         # Use st.write to simulate a redirect by providing a link
