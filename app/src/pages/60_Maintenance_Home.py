@@ -72,15 +72,8 @@ def main():
     # Display main layout
     maintenance_layout()
     
-    # Add helpful tooltips in sidebar
-    st.sidebar.info("""
-    💡 Quick Links:
-    - Monitor Alerts: View and manage system alerts
-    - Manage Backups: Schedule and review backups
-    - Alert History: View historical alerts
-    - Data Alterations: Track database changes
-    - Database Schema: Manage database structure
-    """)
+
 
 if __name__ == "__main__":
+    SideBarLinks(show_home=True)
     main()
