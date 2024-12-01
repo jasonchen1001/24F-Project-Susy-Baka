@@ -1,76 +1,102 @@
 import streamlit as st
-from modules.nav import SideBarLinks
-import logging
-import pandas as pd
 import requests
+import pandas as pd
+from modules.nav import SideBarLinks
 
-logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Page config
+st.title("Student Records Management")
 
-def show_student_records():
-    # Authentication Check
-    if not st.session_state.get("authenticated") or st.session_state.get("role") != "School_Admin":
-        st.error("Please login as School Administrator to access this page.")
-        st.stop()
+# Authentication Check
+if not st.session_state.get("authenticated") or st.session_state.get("role") != "School_Admin":
+    st.error("Please login as a School Administrator to access this page.")
+    st.stop()
 
-    st.title("Student Records Management")
+# Tabs for different functionalities
+tabs = st.tabs(["View Students", "Add New Student", "Student Statistics"])
+
+# View Students Tab
+with tabs[0]:
+    st.write("### Search Student Records")
+    search_query = st.text_input("Search by Name or ID (Optional)")
+    params = {}
     
-    # Return to Home button
-    if st.button("← Back to Home"):
-        st.switch_page("pages/20_Admin_Home.py")
-    
-    st.divider()
-    
-    # Main operations
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        if st.button("View Student Records", use_container_width=True):
-            st.session_state["records_action"] = "view"
-            
-    with col2:
-        if st.button("Add New Student", use_container_width=True):
-            st.session_state["records_action"] = "add"
-            
-    with col3:
-        if st.button("Student Statistics", use_container_width=True):
-            st.session_state["records_action"] = "stats"
+    if search_query:
+        if search_query.isdigit():
+            params["id"] = search_query
+        else:
+            params["name"] = search_query
 
-    st.divider()
+    with st.spinner("Loading student records..."):
+        try:
+            response = requests.get("http://web-api:4000/students", params=params)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error loading student records: {e}")
+            response = None
 
-    # Initialize action if not set
-    if "records_action" not in st.session_state:
-        st.session_state["records_action"] = None
+    if response and response.status_code == 200:
+        students = pd.DataFrame(response.json())
+        if students.empty:
+            st.info("No matching records found.")
+        else:
+            st.write("### Student Records")
+            st.dataframe(students, hide_index=True)
+    else:
+        st.error("Failed to load student records.")
 
-    # Display different sections based on selected action
-    if st.session_state["records_action"] == "view":
-        st.header("Student Records")
-        # Add search/filter options
-        search = st.text_input("Search by Name or ID")
+# Add New Student Tab
+with tabs[1]:
+    st.write("### Add a New Student")
+    with st.form("add_student_form"):
+        full_name = st.text_input("Full Name")
+        email = st.text_input("Email")
+        dob = st.date_input("Date of Birth")
+        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
         
-        # Example student list
-        if search:
-            st.write("Search results will be shown here")
-            # Add your search logic here
-            
-    elif st.session_state["records_action"] == "add":
-        st.header("Add New Student")
-        with st.form("add_student"):
-            full_name = st.text_input("Full Name")
-            email = st.text_input("Email")
-            dob = st.date_input("Date of Birth")
-            gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-            
-            if st.form_submit_button("Add Student"):
-                st.success("Student added successfully!")
+        submitted = st.form_submit_button("Add Student")
+        if submitted:
+            with st.spinner("Adding student..."):
+                try:
+                    response = requests.post(
+                        "http://web-api:4000/students",
+                        json={
+                            "full_name": full_name,
+                            "email": email,
+                            "dob": dob.isoformat(),
+                            "gender": gender
+                        }
+                    )
+                    response.raise_for_status()
+                    if response.status_code == 201:
+                        st.success("Student added successfully!")
+                    else:
+                        st.error(f"Failed to add student. {response.json().get('error', 'Unknown error')}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"Error adding student: {e}")
 
-    elif st.session_state["records_action"] == "stats":
-        st.header("Student Statistics")
-        # Add statistics display here
+# Student Statistics Tab
+with tabs[2]:
+    st.write("### Student Statistics")
+    with st.spinner("Loading statistics..."):
+        try:
+            response = requests.get("http://web-api:4000/reports")
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error loading student statistics: {e}")
+            response = None
 
+    if response and response.status_code == 200:
+        stats = response.json()[0]  # Assuming response contains a list with one stats record
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Total Students", stats.get("total_students", "N/A"))
+        col2.metric("Total Co-ops", stats.get("total_coops", "N/A"))
+        col3.metric("Average GPA", round(stats.get("avg_grade", 0), 2))
+    else:
+        st.error("Failed to load student statistics.")
+
+# Main function to include sidebar links
 def main():
     SideBarLinks(show_home=True)
-    show_student_records()
 
 if __name__ == "__main__":
     main()
