@@ -25,7 +25,7 @@ def AdminHomeNav():
     st.sidebar.page_link("pages/20_Admin_Home.py", label="Admin Dashboard", icon="👨‍💼")
 
 def StudentRecordsNav():
-    st.sidebar.page_link("pages/21_Student_Records.py", label="Student Records", icon="📚")
+    st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
 
 #### ------------------------ HR Role ------------------------
 def HRHomeNav():
