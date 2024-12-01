@@ -30,6 +30,6 @@ def create_app():
     app.register_blueprint(student, url_prefix='/student')  
     app.register_blueprint(school_admin, url_prefix='/school_admin')  
     app.register_blueprint(hr_bp, url_prefix='/hr') 
-    app.register_blueprint(maintenance, url_prefix='/maintenance')  
+    app.register_blueprint(maintenance, url_prefix='/api/maintenance')  
     return app
 

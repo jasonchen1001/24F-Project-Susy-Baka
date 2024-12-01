@@ -10,10 +10,13 @@ logger = logging.getLogger(__name__)
 
 def load_performance_data():
     try:
-        response = requests.get('http://localhost:4000/api/system/performance')
+        response = requests.get('http://web-api:4000/api/maintenance/alerts')
         if response.status_code == 200:
             data = response.json()
-            return pd.DataFrame(data)
+            
+            df = pd.DataFrame(data)
+            df['timestamp'] = pd.Timestamp.now()  
+            return df
         else:
             st.error("Failed to load performance data")
             return pd.DataFrame()
@@ -37,10 +40,14 @@ def show_performance_monitor():
     
     # Create performance metrics visualization
     st.write("### Performance Trends")
-    fig = px.line(df, x='last_update', y='metrics', 
-                  color='database_name', 
-                  title='System Performance Metrics')
-    st.plotly_chart(fig, use_container_width=True)
+    try:
+        fig = px.line(df, x='timestamp', y='metrics', 
+                    color='database_name', 
+                    title='System Performance Metrics')
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        logger.error(f"Error creating performance chart: {str(e)}")
+        st.error("Error creating performance chart")
     
     # Show detailed metrics table
     st.write("### Detailed Metrics")
@@ -49,11 +56,11 @@ def show_performance_monitor():
     col1, col2 = st.columns(2)
     with col1:
         selected_db = st.multiselect('Filter by Database:', 
-                                   options=df['database_name'].unique(),
+                                   options=df['database_name'].unique() if not df.empty else [],
                                    default=[])
     with col2:
         severity_filter = st.multiselect('Filter by Severity:', 
-                                       options=df['severity'].unique(),
+                                       options=df['severity'].unique() if not df.empty else [],
                                        default=[])
     
     # Apply filters
@@ -64,33 +71,42 @@ def show_performance_monitor():
         filtered_df = filtered_df[filtered_df['severity'].isin(severity_filter)]
     
     # Display filtered data
-    st.dataframe(filtered_df, use_container_width=True)
+    if not filtered_df.empty:
+        
+        display_columns = ['database_name', 'metrics', 'alerts', 'severity', 'staff_name']
+        display_df = filtered_df[display_columns]
+        st.dataframe(display_df, use_container_width=True)
+    else:
+        st.info("No data available with current filters")
     
     # Add update monitoring form
     st.write("### Update Monitoring Parameters")
     with st.form("update_monitoring"):
         selected_database = st.selectbox('Select Database:', 
-                                       options=df['database_name'].unique())
+                                       options=df['database_name'].unique() if not df.empty else ['No databases available'])
         metrics = st.text_input('Metrics:')
         alerts = st.text_input('Alerts:')
         severity = st.selectbox('Severity:', ['Low', 'Medium', 'High'])
         
         if st.form_submit_button("Update"):
             try:
-                database_id = df[df['database_name'] == selected_database]['database_id'].iloc[0]
-                response = requests.put(
-                    'http://localhost:4000/api/system/performance',
-                    json={
-                        'database_id': database_id,
-                        'metrics': metrics,
-                        'alerts': alerts,
-                        'severity': severity
-                    }
-                )
-                if response.status_code == 200:
-                    st.success("Monitoring parameters updated successfully")
+                if not df.empty:
+                    database_id = df[df['database_name'] == selected_database]['database_id'].iloc[0]
+                    response = requests.put(
+                        'http://web-api:4000/api/maintenance/alerts',
+                        json={
+                            'database_id': database_id,
+                            'metrics': metrics,
+                            'alerts': alerts,
+                            'severity': severity
+                        }
+                    )
+                    if response.status_code == 200:
+                        st.success("Monitoring parameters updated successfully")
+                    else:
+                        st.error("Failed to update monitoring parameters")
                 else:
-                    st.error("Failed to update monitoring parameters")
+                    st.error("No database selected")
             except Exception as e:
                 logger.error(f"Error updating monitoring parameters: {str(e)}")
                 st.error("Error connecting to server")
