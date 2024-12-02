@@ -54,16 +54,6 @@ def SystemMonitoringNav():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
-<<<<<<< HEAD
-    # Logout button
-    if st.sidebar.button("LOGOUT"):
-        st.session_state["role"] = None
-        st.session_state["authenticated"] = False
-        # Use st.write to simulate a redirect by providing a link
-        st.write("<script>location.reload()</script>", unsafe_allow_html=True)
-
-=======
->>>>>>> 6b6f7466010853b926c7527c0a7af86463c40083
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
