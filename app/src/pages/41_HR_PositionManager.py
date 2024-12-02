@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 from modules.nav import SideBarLinks
 import logging
+import time
 
-# Configure logging
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -37,20 +37,31 @@ def main():
                         st.write(pos['requirements'])
                         st.write(f"**Posted on:** {pos['posted_date']}")
                         
-                        col1, col2 = st.columns(2)
+                        col1, col2, col3 = st.columns(3)
                         with col1:
                             if st.button("Edit", key=f"edit_{pos['position_id']}"):
                                 st.session_state['editing_position'] = pos
                                 st.rerun()
                         with col2:
-                            if st.button("Delete", key=f"delete_{pos['position_id']}"):
-                                if st.button("Confirm Delete", key=f"confirm_{pos['position_id']}"):
+                            delete_btn = st.button("Delete", key=f"delete_{pos['position_id']}", type="secondary")
+                        with col3:
+                            if delete_btn:
+                                confirm_delete = st.button(
+                                    "Confirm Delete", 
+                                    key=f"confirm_{pos['position_id']}", 
+                                    type="secondary"
+                                )
+                                if confirm_delete:
                                     response = requests.delete(
                                         f"http://web-api:4000/hr/internships/{pos['position_id']}"
                                     )
                                     if response.status_code == 200:
-                                        st.success("Position deleted!")
+                                        st.success(response.json().get('message', 'Position deleted!'))
+                                        time.sleep(1)
                                         st.rerun()
+                                    else:
+                                        st.error(response.json().get('error', 'Failed to delete position'))
+                        st.divider()
             else:
                 st.error("Failed to load positions")
         except Exception as e:
@@ -127,11 +138,11 @@ def main():
                 # Position-wise metrics
                 st.write("### Position Details")
                 for pos in analytics:
-                    st.write(f"#### {pos['title']}")
-                    st.metric("Applications", int(pos.get('total_applications', 0)))
-                    st.write(f"Accepted: {int(pos.get('accepted', 0))}")
-                    st.write(f"Rejected: {int(pos.get('rejected', 0))}")
-                    st.write(f"Pending: {int(pos.get('pending', 0))}")
+                    with st.expander(pos['title']):
+                        st.metric("Applications", int(pos.get('total_applications', 0)))
+                        st.write(f"Accepted: {int(pos.get('accepted', 0))}")
+                        st.write(f"Rejected: {int(pos.get('rejected', 0))}")
+                        st.write(f"Pending: {int(pos.get('pending', 0))}")
             else:
                 st.error("Failed to load analytics")
         except Exception as e:

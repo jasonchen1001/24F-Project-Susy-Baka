@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 from modules.nav import SideBarLinks
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
@@ -47,7 +48,7 @@ def main():
                             
                             for app in apps:
                                 with st.container():
-                                    col1, col2 = st.columns([3, 1])
+                                    col1, col2, col3 = st.columns([3, 2, 1])
                                     with col1:
                                         st.write(f"**Applicant:** {app['full_name']}")
                                         st.write(f"**Email:** {app['email']}")
@@ -61,6 +62,7 @@ def main():
                                             )
                                             if response.status_code == 200:
                                                 st.success("Application accepted!")
+                                                time.sleep(1)
                                                 st.rerun()
                                         
                                         if st.button("Reject", key=f"reject_{app['application_id']}", type="secondary"):
@@ -70,7 +72,31 @@ def main():
                                             )
                                             if response.status_code == 200:
                                                 st.success("Application rejected!")
+                                                time.sleep(1)
                                                 st.rerun()
+                                    
+                                    with col3:
+                                        delete_btn = st.button(
+                                            "Delete", 
+                                            key=f"delete_{app['application_id']}", 
+                                            type="secondary"
+                                        )
+                                        if delete_btn:
+                                            confirm_delete = st.button(
+                                                "Confirm Delete",
+                                                key=f"confirm_{app['application_id']}",
+                                                type="secondary"
+                                            )
+                                            if confirm_delete:
+                                                response = requests.delete(
+                                                    f"http://web-api:4000/hr/applications/{app['application_id']}"
+                                                )
+                                                if response.status_code == 200:
+                                                    st.success("Application deleted!")
+                                                    time.sleep(1)
+                                                    st.rerun()
+                                                else:
+                                                    st.error(response.json().get('error', 'Failed to delete application'))
                                     st.divider()
                     else:
                         st.info("No pending applications to review.")
@@ -91,7 +117,6 @@ def main():
                     ["All", "Accepted", "Rejected", "Pending"]
                 )
                 
-                # Filter applications
                 filtered_apps = applications if status_filter == "All" else [
                     app for app in applications 
                     if app.get('status', '').upper() == status_filter.upper()
