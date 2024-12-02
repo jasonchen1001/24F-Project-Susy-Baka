@@ -56,20 +56,17 @@ def ApplicationReviewNav():
 def ResumeScreenNav():
     st.sidebar.page_link("pages/43_HR_ResumeScreen.py", label="Resume Screening", icon="📄")
 
-#### ------------------------ Maintenance Role ------------------------
-def MaintenanceHomeNav():
-    st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
-
-def SystemMonitoringNav():
-    st.sidebar.page_link("pages/61_System_Monitoring.py", label="Monitoring", icon="📊")
 
 
+<<<<<<< HEAD
     # Ensure session state keys are initialized
     if "role" not in st.session_state:
         st.session_state["role"] = None
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
+=======
+>>>>>>> b69dd6d2bc3bbc429a8d36ef468dffba3992421f
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
@@ -77,11 +74,6 @@ def MaintenanceHomeNav():
 def AlertMonitorNav():
     st.sidebar.page_link("pages/61_Alert_Monitor.py", label="Monitor Alerts", icon="🔔")
 
-def BackupManagerNav():
-    st.sidebar.page_link("pages/62_Backup_Manager.py", label="Backup Management", icon="💾")
-
-def AlertHistoryNav():
-    st.sidebar.page_link("pages/63_Alert_History.py", label="Alert History", icon="📋")
 
 def AlterationManagerNav():
     st.sidebar.page_link("pages/64_Alteration_Manager.py", label="Data Alterations", icon="📝")
@@ -122,8 +114,6 @@ def SideBarLinks(show_home=False):
         elif st.session_state["role"] == "Maintenance_Staff":
             MaintenanceHomeNav()
             AlertMonitorNav()
-            BackupManagerNav()
-            AlertHistoryNav()
             AlterationManagerNav()
             DatabaseManagerNav()
     

@@ -578,4 +578,7 @@ SET company_name = 'Google',
     start_date = '2023-03-01',
     end_date = '2023-05-31'
 WHERE student_id = 1 AND company_name = 'Meta';
+<<<<<<< HEAD
 
+=======
+>>>>>>> b69dd6d2bc3bbc429a8d36ef468dffba3992421f

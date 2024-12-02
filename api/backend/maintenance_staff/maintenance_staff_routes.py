@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 
 maintenance = Blueprint('maintenance', __name__)
+logger = logging.getLogger(__name__)
 
 def serialize_results(cursor, rows):
     """Convert database rows to dictionaries with column names"""

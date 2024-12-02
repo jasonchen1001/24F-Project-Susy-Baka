@@ -69,12 +69,6 @@ def maintenance_layout():
         st.page_link("pages/61_Alert_Monitor.py", 
                     label="Monitor System Alerts", 
                     use_container_width=True)
-        st.page_link("pages/62_Backup_Manager.py", 
-                    label="Manage Backups", 
-                    use_container_width=True)
-        st.page_link("pages/63_Alert_History.py", 
-                    label="View Alert History", 
-                    use_container_width=True)
 
     with col2:
         st.page_link("pages/64_Alteration_Manager.py", 
