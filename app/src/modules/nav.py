@@ -56,17 +56,6 @@ def ApplicationReviewNav():
 def ResumeScreenNav():
     st.sidebar.page_link("pages/43_HR_ResumeScreen.py", label="Resume Screening", icon="📄")
 
-
-
-<<<<<<< HEAD
-    # Ensure session state keys are initialized
-    if "role" not in st.session_state:
-        st.session_state["role"] = None
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
-
-=======
->>>>>>> b69dd6d2bc3bbc429a8d36ef468dffba3992421f
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
