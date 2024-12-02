@@ -27,19 +27,9 @@ def AdminHomeNav():
 def StudentRecordsNav():
     st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
 
-# 管理员首页导航
-def AdminHomeNav():
-    st.sidebar.page_link("pages/20_Admin_Home.py", label="Admin Dashboard", icon="👨‍💼")
-
-# 学生记录管理导航
-def StudentRecordsNav():
-    st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
-
-# 成绩管理导航
 def GradeManagerNav():
     st.sidebar.page_link("pages/22_Admin_GradeManager.py", label="Grade Management", icon="📝")
 
-# 实习审核导航
 def CoopApprovalNav():
     st.sidebar.page_link("pages/23_Admin_CoopApproval.py", label="Co-op Approvals", icon="✅")
 
@@ -56,17 +46,6 @@ def ApplicationReviewNav():
 def ResumeScreenNav():
     st.sidebar.page_link("pages/43_HR_ResumeScreen.py", label="Resume Screening", icon="📄")
 
-
-
-<<<<<<< HEAD
-    # Ensure session state keys are initialized
-    if "role" not in st.session_state:
-        st.session_state["role"] = None
-    if "authenticated" not in st.session_state:
-        st.session_state["authenticated"] = False
-
-=======
->>>>>>> b69dd6d2bc3bbc429a8d36ef468dffba3992421f
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
@@ -106,6 +85,8 @@ def SideBarLinks(show_home=False):
         elif st.session_state["role"] == "School_Admin":
             AdminHomeNav()
             StudentRecordsNav()
+            GradeManagerNav()
+            CoopApprovalNav()
         elif st.session_state["role"] == "HR_Manager":
             HRHomeNav()
             InternshipNav()
@@ -124,10 +105,6 @@ def SideBarLinks(show_home=False):
         st.session_state["role"] = None
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
-
-
-
-
 
     # Logout button
     if st.sidebar.button("Logout"):
