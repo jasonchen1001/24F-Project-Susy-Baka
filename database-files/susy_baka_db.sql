@@ -579,12 +579,3 @@ SET company_name = 'Google',
     end_date = '2023-05-31'
 WHERE student_id = 1 AND company_name = 'Meta';
 
-INSERT INTO maintenance_staff (user_id, full_name) 
-VALUES (1, 'Thomas Anderson') 
-ON DUPLICATE KEY UPDATE full_name = 'Thomas Anderson';
-
-INSERT INTO database_info (database_id, staff_id, name, version, type, last_update)
-VALUES (1, 1, 'Test Database', '1.0', 'MySQL', CURDATE());
-
-INSERT INTO backup_history (type, backup_date, backup_type, details, database_id)
-VALUES ('Full', CURDATE(), 'Daily', 'Backup of test database', 1);

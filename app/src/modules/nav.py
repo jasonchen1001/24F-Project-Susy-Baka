@@ -27,6 +27,22 @@ def AdminHomeNav():
 def StudentRecordsNav():
     st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
 
+# 管理员首页导航
+def AdminHomeNav():
+    st.sidebar.page_link("pages/20_Admin_Home.py", label="Admin Dashboard", icon="👨‍💼")
+
+# 学生记录管理导航
+def StudentRecordsNav():
+    st.sidebar.page_link("pages/21_Admin_StudentRecords.py", label="Student Records", icon="📚")
+
+# 成绩管理导航
+def GradeManagerNav():
+    st.sidebar.page_link("pages/22_Admin_GradeManager.py", label="Grade Management", icon="📝")
+
+# 实习审核导航
+def CoopApprovalNav():
+    st.sidebar.page_link("pages/23_Admin_CoopApproval.py", label="Co-op Approvals", icon="✅")
+
 #### ------------------------ HR Role ------------------------
 def HRHomeNav():
     st.sidebar.page_link("pages/40_HR_Home.py", label="HR Dashboard", icon="👥")
@@ -54,16 +70,6 @@ def SystemMonitoringNav():
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
 
-<<<<<<< HEAD
-    # Logout button
-    if st.sidebar.button("LOGOUT"):
-        st.session_state["role"] = None
-        st.session_state["authenticated"] = False
-        # Use st.write to simulate a redirect by providing a link
-        st.write("<script>location.reload()</script>", unsafe_allow_html=True)
-
-=======
->>>>>>> 6b6f7466010853b926c7527c0a7af86463c40083
         #### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
