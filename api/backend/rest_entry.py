@@ -3,7 +3,7 @@ from backend.db_connection import db
 from backend.hr.hr_routes import hr_bp 
 from backend.student.student_routes import student
 from backend.school_admin.school_admin_routes import school_admin
-from backend.maintenance_staff.maintenance_staff_routes import maintenance
+from backend.maintenance_staff.maintenance_staff_routes import maintenance_staff
 import os
 from dotenv import load_dotenv
 
@@ -30,6 +30,6 @@ def create_app():
     app.register_blueprint(student, url_prefix='/student')  
     app.register_blueprint(school_admin, url_prefix='/school_admin')  
     app.register_blueprint(hr_bp, url_prefix='/hr') 
-    app.register_blueprint(maintenance, url_prefix='/api/maintenance')  
+    app.register_blueprint(maintenance_staff, url_prefix='/maintenance_staff')  
     return app
 

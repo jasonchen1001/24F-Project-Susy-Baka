@@ -162,8 +162,7 @@ def update_resume(user_id):
     """Update the resume of a student (excluding education and co-op)"""
     try:
         resume_data = request.json
-        
-        # 获取当前简历数据
+
         cursor = db.get_db().cursor()
         cursor.execute('''
             SELECT education, co_op 
@@ -175,14 +174,12 @@ def update_resume(user_id):
         if not current_resume:
             return make_response(jsonify({'message': 'Resume not found'}), 404)
         
-        # 确保 education 和 co-op 字段没有被修改
         if ('education' in resume_data or 'co_op' in resume_data):
             return make_response(
                 jsonify({'message': 'Education and Co-op fields can only be updated by School Admin'}),
                 403
             )
         
-        # 执行更新，只更新允许的字段
         cursor.execute('''
             UPDATE resume
             SET skills = %s,
@@ -325,4 +322,55 @@ def get_available_positions(user_id):
         return make_response(jsonify(result), 200)
     except Exception as e:
         current_app.logger.error(f"Error fetching available positions: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)
+
+# ------------------------------------------------------------
+# Add a new application
+@student.route('/<int:user_id>/applications', methods=['POST'])
+def add_application(user_id):
+    """Add a new application for a student."""
+    try:
+        application_data = request.json
+        position_id = application_data.get('position_id')
+        sent_on = application_data.get('sent_on')
+        status = application_data.get('status', 'Pending')
+
+        if not position_id or not sent_on:
+            return make_response(jsonify({'error': 'Missing required fields: position_id or sent_on'}), 400)
+
+        cursor = db.get_db().cursor()
+        query = '''
+            INSERT INTO application (user_id, position_id, sent_on, status)
+            VALUES (%s, %s, %s, %s)
+        '''
+        cursor.execute(query, (user_id, position_id, sent_on, status))
+        db.get_db().commit()
+
+        return make_response(jsonify({'message': 'Application added successfully'}), 201)
+    except Exception as e:
+        db.get_db().rollback()
+        current_app.logger.error(f"Error in add_application: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)
+
+# ------------------------------------------------------------
+# Delete an application
+@student.route('/<int:user_id>/applications/<int:application_id>', methods=['DELETE'])
+def delete_application(user_id, application_id):
+    """Delete an application for a student."""
+    try:
+        cursor = db.get_db().cursor()
+        query = '''
+            DELETE FROM application
+            WHERE application_id = %s AND user_id = %s
+        '''
+        cursor.execute(query, (application_id, user_id))
+        db.get_db().commit()
+
+        if cursor.rowcount == 0:
+            return make_response(jsonify({'error': 'Application not found or not authorized to delete'}), 404)
+
+        return make_response(jsonify({'message': 'Application deleted successfully'}), 200)
+    except Exception as e:
+        db.get_db().rollback()
+        current_app.logger.error(f"Error in delete_application: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)

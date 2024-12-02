@@ -55,10 +55,10 @@ def AlertMonitorNav():
 
 
 def AlterationManagerNav():
-    st.sidebar.page_link("pages/64_Alteration_Manager.py", label="Data Alterations", icon="📝")
+    st.sidebar.page_link("pages/62_Data_Alteration_Manager.py", label="Data Alterations", icon="📝")
 
 def DatabaseManagerNav():
-    st.sidebar.page_link("pages/65_Database_Manager.py", label="Database Management", icon="🗃️")
+    st.sidebar.page_link("pages/63_Backup_History.py", label="Backup History", icon="🗃️")
 
 def SideBarLinks(show_home=False):
     """

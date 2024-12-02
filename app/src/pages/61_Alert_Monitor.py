@@ -1,145 +1,114 @@
 import streamlit as st
 import requests
-from datetime import datetime
-from modules.nav import SideBarLinks
+import pandas as pd
+import logging
 
-def format_date(date_str):
-    """Format date string to readable format"""
+# 设置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# API URL
+API_BASE_URL = "http://web-api:4000/maintenance_staff"
+
+def fetch_alerts():
+    """获取 Alert 数据"""
     try:
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        return date_obj.strftime('%B %d, %Y')
-    except:
-        return date_str
+        with st.spinner("Loading alerts..."):
+            response = requests.get(f"{API_BASE_URL}/alerts")
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    return data
+                else:
+                    st.info("No alerts available.")
+                    return None
+            else:
+                st.error(f"Failed to fetch alerts. Status Code: {response.status_code}")
+                logger.error(f"API Error: {response.text}")
+                return None
+    except requests.exceptions.RequestException as e:
+        st.error("Failed to connect to the server.")
+        logger.error(f"Connection Error: {str(e)}")
+        return None
+
+
+def update_alert(alert_id, metrics, alerts, severity):
+    """更新 Alert 数据"""
+    try:
+        with st.spinner("Updating alert..."):
+            # 确保 URL 正确拼接
+            url = f"{API_BASE_URL}/alerts/{alert_id}"
+            
+            # 构建请求数据
+            data = {
+                "metrics": metrics,
+                "alerts": alerts,
+                "severity": severity
+            }
+            
+            # 发送 PUT 请求
+            response = requests.put(url, json=data)
+            
+            if response.status_code == 200:
+                st.success("Alert updated successfully!")
+                st.rerun()
+            else:
+                st.error(f"Failed to update alert. Status Code: {response.status_code}")
+                if response.status_code == 404:
+                    st.error("Alert ID not found.")
+                st.error(f"Error details: {response.text}")
+    except Exception as e:
+        st.error(f"Error updating alert: {str(e)}")
 
 def main():
-    # Authentication Check
-    if not st.session_state.get("authenticated") or st.session_state.get("role") != "Maintenance_Staff":
-        st.error("Please login as Maintenance Staff to access this page.")
-        st.stop()
+    st.title("Alert History Management")
+    st.write("Manage alert history for databases.")
 
-    st.title("Backup Management System")
+    # 获取告警数据
+    with st.spinner("Loading alerts..."):
+        response = requests.get(f"{API_BASE_URL}/alerts")
+        if response.status_code == 200:
+            alerts = response.json()
+            if alerts:
+                # 转换为 DataFrame 并显示
+                df = pd.DataFrame(alerts)
+                st.subheader("Current Alerts")
+                
+                # 显示当前告警列表
+                st.dataframe(
+                    df,
+                    hide_index=True,
+                    use_container_width=True
+                )
 
-    # Return to Home button
-    if st.button("← Back to Home"):
-        st.switch_page("pages/60_Maintenance_Home.py")
+                # 编辑部分
+                st.subheader("Edit Alert")
+                
+                # 使用 database_id 作为选项
+                selected_alert = st.selectbox(
+                    "Select Alert to Edit",
+                    options=df["database_id"].tolist(),
+                    format_func=lambda x: f"Database: {df[df['database_id']==x]['database_name'].iloc[0]} ({x})"
+                )
 
-    # Create tabs
-    tabs = st.tabs(["Manage Backups", "Create New Backup"])
-
-    # Tab 1: Manage Backups
-    with tabs[0]:
-        st.subheader("Manage Backups")
-        try:
-            # Get database info for reference
-            db_response = requests.get('http://web-api:4000/api/maintenance/databases')
-            if db_response.status_code == 200:
-                databases = {db['database_id']: db for db in db_response.json()}
-            
-            # Get backups
-            backup_response = requests.get('http://web-api:4000/api/maintenance/backups')
-            if backup_response.status_code == 200:
-                backups = backup_response.json()
-                if backups:
-                    for i, backup in enumerate(backups):
-                        with st.container():
-                            # Get associated database info
-                            db_id = backup.get('database_id')
-                            db_info = databases.get(db_id, {}) if db_id else {}
-
-                            col1, col2 = st.columns([3, 1])
-                            with col1:
-                                st.write(f"**Type:** {backup.get('type', 'N/A')}")
-                                st.write(f"**Schedule Type:** {backup.get('backup_type', 'N/A')}")
-                                st.write(f"**Database:** {backup.get('database_name', 'N/A')}")
-                                st.write(f"**Date:** {format_date(backup.get('backup_date', 'N/A'))}")
-                                if backup.get('details'):
-                                    st.write(f"**Details:** {backup.get('details')}")
-
-                            with col2:
-                                # Use unique keys for buttons
-                                unique_id = f"{i}_{backup.get('database_id', '')}"
-                                if st.button("View", key=f"view_{unique_id}"):
-                                    st.json(backup)
-                                if st.button("Delete", key=f"delete_{unique_id}"):
-                                    try:
-                                        delete_response = requests.delete(
-                                            f"http://web-api:4000/api/maintenance/backups/{backup.get('database_id', '')}"
-                                        )
-                                        if delete_response.status_code == 200:
-                                            st.success("Backup deleted successfully!")
-                                            st.rerun()  # Updated from experimental_rerun
-                                        else:
-                                            st.error("Failed to delete backup")
-                                    except Exception as e:
-                                        st.error(f"Error deleting backup: {str(e)}")
-
-                            st.divider()
-                else:
-                    st.info("No backups found")
-        except Exception as e:
-            st.error(f"Error loading data: {str(e)}")
-
-    # Tab 2: Create New Backup
-    with tabs[1]:
-        st.subheader("Create New Backup")
-        
-        # Get available databases
-        try:
-            db_response = requests.get('http://web-api:4000/api/maintenance/databases')
-            if db_response.status_code == 200:
-                databases = db_response.json()
-                database_names = [db['name'] for db in databases]
+                if selected_alert:
+                    alert_data = df[df["database_id"] == selected_alert].iloc[0]
+                    
+                    with st.form("edit_alert_form"):
+                        metrics = st.text_input("Metrics", value=alert_data["metrics"])
+                        alerts_text = st.text_area("Alerts", value=alert_data["alerts"])
+                        severity = st.selectbox(
+                            "Severity",
+                            options=["Low", "Medium", "High"],
+                            index=["Low", "Medium", "High"].index(alert_data["severity"])
+                        )
+                        
+                        if st.form_submit_button("Update Alert"):
+                            update_alert(selected_alert, metrics, alerts_text, severity)
             else:
-                database_names = []
-        except:
-            database_names = []
-
-        with st.form("backup_form", clear_on_submit=True):
-            # Match the database schema fields
-            selected_db = st.selectbox(
-                "Select Database",
-                options=database_names if database_names else ["No databases available"]
-            )
-            
-            backup_type = st.selectbox(
-                "Backup Type",
-                options=["Full", "Incremental"]
-            )
-            
-            schedule_type = st.selectbox(
-                "Schedule Type",
-                options=["Daily", "Weekly", "Monthly", "Manual"]
-            )
-            
-            details = st.text_area(
-                "Backup Details",
-                placeholder="Enter any additional details about this backup"
-            )
-
-            submitted = st.form_submit_button("Create Backup")
-            if submitted:
-                try:
-                    # Prepare data according to database schema
-                    backup_data = {
-                        "type": backup_type,
-                        "backup_type": schedule_type,
-                        "details": details,
-                        "database_name": selected_db
-                    }
-                    
-                    response = requests.post(
-                        'http://web-api:4000/api/maintenance/backups',
-                        json=backup_data
-                    )
-                    
-                    if response.status_code == 201:
-                        st.success("Backup created successfully!")
-                        st.rerun()  # Updated from experimental_rerun
-                    else:
-                        st.error("Failed to create backup")
-                except Exception as e:
-                    st.error(f"Error creating backup: {str(e)}")
+                st.info("No alerts available.")
+        else:
+            st.error(f"Failed to fetch alerts. Status Code: {response.status_code}")
 
 if __name__ == "__main__":
-    SideBarLinks(show_home=True)
     main()

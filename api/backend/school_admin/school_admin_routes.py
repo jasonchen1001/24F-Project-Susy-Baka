@@ -4,7 +4,6 @@ from backend.db_connection import db
 school_admin = Blueprint('school_admin', __name__)
 
 # ------------------------------------------------------------
-# 获取所有学生信息，包括成绩和实习记录
 @school_admin.route('/students', methods=['GET'])
 def get_students():
     try:
@@ -26,7 +25,6 @@ def get_students():
         return make_response(jsonify({'error': str(e)}), 500)
 
 # ------------------------------------------------------------
-# 查询特定学生的成绩记录
 @school_admin.route('/students/<int:user_id>/grades', methods=['GET'])
 def get_student_grades(user_id):
     try:
@@ -44,7 +42,6 @@ def get_student_grades(user_id):
         return make_response(jsonify({'error': str(e)}), 500)
 
 # ------------------------------------------------------------
-# 修改特定学生的成绩记录
 @school_admin.route('/students/<int:user_id>/grades/<int:grade_id>', methods=['PUT'])
 def update_student_grade(user_id, grade_id):
     try:
@@ -63,7 +60,6 @@ def update_student_grade(user_id, grade_id):
         return make_response(jsonify({'error': str(e)}), 500)
 
 # ------------------------------------------------------------
-# 查询特定学生的实习经历
 @school_admin.route('/students/<int:user_id>/coops', methods=['GET'])
 def get_student_coops(user_id):
     try:
@@ -81,7 +77,6 @@ def get_student_coops(user_id):
         return make_response(jsonify({'error': str(e)}), 500)
 
 # ------------------------------------------------------------
-# 修改特定学生的实习经历
 @school_admin.route('/students/<int:user_id>/coops/<int:coop_id>', methods=['PUT'])
 def update_student_coop(user_id, coop_id):
     try:
