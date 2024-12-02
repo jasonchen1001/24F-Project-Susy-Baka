@@ -46,7 +46,7 @@ def ApplicationReviewNav():
 def ResumeScreenNav():
     st.sidebar.page_link("pages/43_HR_ResumeScreen.py", label="Resume Screening", icon="📄")
 
-        #### ------------------------ Maintenance Role ------------------------
+#### ------------------------ Maintenance Role ------------------------
 def MaintenanceHomeNav():
     st.sidebar.page_link("pages/60_Maintenance_Home.py", label="System Dashboard", icon="🔧")
 
