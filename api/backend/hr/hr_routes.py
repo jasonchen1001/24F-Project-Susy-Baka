@@ -49,6 +49,60 @@ def add_internship():
         logger.error(f"Error adding internship: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
+@hr_bp.route('/internships/<int:position_id>', methods=['DELETE'])
+def delete_internship(position_id):
+    """Delete an internship position"""
+    try:
+        cursor = db.get_db().cursor()
+        
+        # Check if position exists and belongs to the HR manager
+        cursor.execute('''
+            SELECT COUNT(*) as count 
+            FROM internship_position 
+            WHERE position_id = %s
+        ''', (position_id,))
+        result = cursor.fetchone()
+        
+        if not result or result['count'] == 0:
+            logger.error(f"Position {position_id} not found")
+            return make_response(jsonify({'error': 'Position not found'}), 404)
+        
+        # Check for existing applications
+        cursor.execute('''
+            SELECT COUNT(*) as app_count 
+            FROM application 
+            WHERE position_id = %s
+        ''', (position_id,))
+        app_result = cursor.fetchone()
+        
+        # If there are applications, perform soft delete by updating status
+        if app_result['app_count'] > 0:
+            logger.info(f"Position {position_id} has applications, performing soft delete")
+            cursor.execute('''
+                UPDATE internship_position 
+                SET status = 'Inactive'
+                WHERE position_id = %s
+            ''', (position_id,))
+            db.get_db().commit()
+            return make_response(jsonify({
+                'message': 'Position deactivated due to existing applications'
+            }), 200)
+        
+        # If no applications, perform hard delete
+        cursor.execute('''
+            DELETE FROM internship_position 
+            WHERE position_id = %s
+        ''', (position_id,))
+        db.get_db().commit()
+        
+        logger.info(f"Position {position_id} deleted successfully")
+        return make_response(jsonify({'message': 'Position deleted successfully'}), 200)
+    
+    except Exception as e:
+        db.get_db().rollback()
+        logger.error(f"Error deleting position {position_id}: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)
+
 # Application Management Routes
 @hr_bp.route('/applications', methods=['GET'])
 def get_applications():
@@ -135,6 +189,45 @@ def update_application_status(application_id):
         logger.error(f"Error updating application: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
+@hr_bp.route('/applications/<int:application_id>', methods=['DELETE'])
+def delete_application(application_id):
+    """Delete an application"""
+    try:
+        cursor = db.get_db().cursor()
+        
+        # Check if application exists
+        cursor.execute('''
+            SELECT status 
+            FROM application 
+            WHERE application_id = %s
+        ''', (application_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            logger.error(f"Application {application_id} not found")
+            return make_response(jsonify({'error': 'Application not found'}), 404)
+        
+        # Don't allow deletion of processed applications
+        if result['status'] in ['Accepted', 'Rejected']:
+            logger.error(f"Cannot delete processed application {application_id}")
+            return make_response(jsonify({
+                'error': 'Cannot delete processed applications'
+            }), 400)
+        
+        cursor.execute('''
+            DELETE FROM application 
+            WHERE application_id = %s
+        ''', (application_id,))
+        db.get_db().commit()
+        
+        logger.info(f"Application {application_id} deleted successfully")
+        return make_response(jsonify({'message': 'Application deleted successfully'}), 200)
+    
+    except Exception as e:
+        db.get_db().rollback()
+        logger.error(f"Error deleting application {application_id}: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)
+
 # Resume Management Routes
 @hr_bp.route('/resumes', methods=['GET'])
 def get_resumes():
@@ -158,6 +251,39 @@ def get_resumes():
         logger.error(f"Error getting resumes: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
 
+@hr_bp.route('/resumes/<int:resume_id>/suggestions/<int:suggestion_id>', methods=['DELETE'])
+def delete_suggestion(resume_id, suggestion_id):
+    """Delete a resume suggestion"""
+    try:
+        cursor = db.get_db().cursor()
+        
+        # Check if suggestion exists and belongs to the resume
+        cursor.execute('''
+            SELECT COUNT(*) as count 
+            FROM suggestion 
+            WHERE suggestion_id = %s AND resume_id = %s
+        ''', (suggestion_id, resume_id))
+        result = cursor.fetchone()
+        
+        if not result or result['count'] == 0:
+            logger.error(f"Suggestion {suggestion_id} not found for resume {resume_id}")
+            return make_response(jsonify({'error': 'Suggestion not found'}), 404)
+        
+        cursor.execute('''
+            DELETE FROM suggestion 
+            WHERE suggestion_id = %s
+        ''', (suggestion_id,))
+        db.get_db().commit()
+        
+        logger.info(f"Suggestion {suggestion_id} deleted successfully")
+        return make_response(jsonify({'message': 'Suggestion deleted successfully'}), 200)
+    
+    except Exception as e:
+        db.get_db().rollback()
+        logger.error(f"Error deleting suggestion {suggestion_id}: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)
+
+# Analytics Routes
 @hr_bp.route('/analytics/positions', methods=['GET'])
 def get_position_analytics():
     """Get analytics for internship positions"""

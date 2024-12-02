@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 from modules.nav import SideBarLinks
 import logging
+import time
 
-# Configure logging
 logging.basicConfig(format='%(filename)s:%(lineno)s:%(levelname)s -- %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -60,8 +60,40 @@ def main():
                                         st.info(resume['co_op'])
                             
                             if resume.get('latest_suggestion'):
-                                st.write("**Previous Feedback:**")
-                                st.info(resume['latest_suggestion'])
+                                col1, col2 = st.columns([3, 1])
+                                with col1:
+                                    st.write("**Previous Feedback:**")
+                                    st.info(resume['latest_suggestion'])
+                                with col2:
+                                    delete_btn = st.button(
+                                        "Delete Feedback", 
+                                        key=f"delete_feedback_{resume['resume_id']}", 
+                                        type="secondary"
+                                    )
+                                    if delete_btn:
+                                        confirm_delete = st.button(
+                                            "Confirm Delete",
+                                            key=f"confirm_delete_{resume['resume_id']}",
+                                            type="secondary"
+                                        )
+                                        if confirm_delete:
+                                            # Get the latest suggestion ID for this resume
+                                            suggestion_response = requests.get(
+                                                f"http://web-api:4000/hr/resumes/{resume['resume_id']}/suggestions"
+                                            )
+                                            if suggestion_response.status_code == 200:
+                                                suggestions = suggestion_response.json()
+                                                if suggestions:
+                                                    latest_suggestion = suggestions[0]  # Assuming ordered by time_created DESC
+                                                    delete_response = requests.delete(
+                                                        f"http://web-api:4000/hr/resumes/{resume['resume_id']}/suggestions/{latest_suggestion['suggestion_id']}"
+                                                    )
+                                                    if delete_response.status_code == 200:
+                                                        st.success("Feedback deleted!")
+                                                        time.sleep(1)
+                                                        st.rerun()
+                                                    else:
+                                                        st.error("Failed to delete feedback")
                             
                             with st.form(f"feedback_form_{resume['resume_id']}"):
                                 feedback = st.text_area("Enter Feedback")
