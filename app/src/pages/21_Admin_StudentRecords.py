@@ -80,7 +80,7 @@ if user_id:
             step=0.1,
             key="add_grade_value"
         )
-        recorded_by = st.text_input("Recorded By (e.g., Instructor Name):")
+        recorded_by = st.text_input("Recorded By:")
         
         if st.button("Add Grade", key="add_button"):
             add_data = {

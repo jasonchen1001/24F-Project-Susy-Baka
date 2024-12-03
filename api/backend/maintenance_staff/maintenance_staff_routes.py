@@ -314,3 +314,4 @@ def get_databases():
     except Exception as e:
         current_app.logger.error(f"Error in get_databases: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
+    
