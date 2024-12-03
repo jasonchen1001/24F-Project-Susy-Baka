@@ -66,13 +66,23 @@ def main():
                             with st.form(f"feedback_form_{resume['resume_id']}"):
                                 feedback = st.text_area("Enter Feedback")
                                 if st.form_submit_button("Submit Feedback"):
-                                    response = requests.post(
-                                        f"http://web-api:4000/hr/resumes/{resume['resume_id']}/suggestions",
-                                        json={"suggestion_text": feedback}
-                                    )
-                                    if response.status_code == 201:
-                                        st.success("Feedback submitted!")
-                                        st.rerun()
+                                    if not feedback:
+                                        st.warning("Please enter feedback before submitting.")
+                                    else:
+                                        try:
+                                            response = requests.post(
+                                                f"http://web-api:4000/hr/resumes/{resume['resume_id']}/suggestions",
+                                                json={"suggestion_text": feedback}
+                                            )
+                                            
+                                            if response.status_code == 201:
+                                                st.success("Feedback submitted successfully!")
+                                                st.rerun()
+                                            else:
+                                                st.error(f"Failed to submit feedback. Status code: {response.status_code}")
+                                                st.error(f"Error details: {response.text}")
+                                        except Exception as e:
+                                            st.error(f"Error submitting feedback: {str(e)}")
                             
                             st.divider()
             else:

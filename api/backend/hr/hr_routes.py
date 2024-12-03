@@ -306,4 +306,30 @@ def get_position_analytics():
     except Exception as e:
         logger.error(f"Error getting analytics: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
-    
+
+@hr_bp.route('/resumes/<int:resume_id>/suggestions', methods=['POST'])
+def add_suggestion(resume_id):
+    """Add a new suggestion to a resume"""
+    try:
+        cursor = db.get_db().cursor()
+        
+        cursor.execute('SELECT * FROM resume WHERE resume_id = %s', (resume_id,))
+        if not cursor.fetchone():
+            return make_response(jsonify({'error': 'Resume not found'}), 404)
+        
+        suggestion_text = request.json.get('suggestion_text')
+        if not suggestion_text:
+            return make_response(jsonify({'error': 'Suggestion text is required'}), 400)
+            
+        query = '''
+            INSERT INTO suggestion (resume_id, suggestion_text, time_created)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+        '''
+        cursor.execute(query, (resume_id, suggestion_text))
+        db.get_db().commit()
+        
+        return make_response(jsonify({'message': 'Suggestion added successfully'}), 201)
+    except Exception as e:
+        db.get_db().rollback()
+        logger.error(f"Error adding suggestion: {str(e)}")
+        return make_response(jsonify({'error': str(e)}), 500)    
