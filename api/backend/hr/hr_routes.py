@@ -306,3 +306,4 @@ def get_position_analytics():
     except Exception as e:
         logger.error(f"Error getting analytics: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 500)
+    

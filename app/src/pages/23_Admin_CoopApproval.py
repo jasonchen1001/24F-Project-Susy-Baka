@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 
 st.title("Student Co-op Management")
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/20_Admin_Home.py")
+    
 user_id = st.text_input("Enter Student ID to Query Co-ops:")
 
 if user_id:

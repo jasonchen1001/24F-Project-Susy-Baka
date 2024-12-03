@@ -3,11 +3,13 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-# API 基础 URL
 API_BASE_URL = "http://web-api:4000/maintenance_staff"
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/60_Maintenance_Home.py")
+    
 def fetch_backups():
-    """获取备份历史"""
     try:
         response = requests.get(f"{API_BASE_URL}/backups")
         if response.status_code == 200:
@@ -18,7 +20,6 @@ def fetch_backups():
         return None
 
 def add_backup(database_id, backup_type, backup_date, details):
-    """添加新的备份记录"""
     try:
         response = requests.post(
             f"{API_BASE_URL}/backups",
@@ -40,7 +41,6 @@ def add_backup(database_id, backup_type, backup_date, details):
         st.error(f"Error adding backup: {str(e)}")
 
 def update_backup(backup_id, backup_type, backup_date, details):
-    """更新备份记录"""
     try:
         response = requests.put(
             f"{API_BASE_URL}/backups/{backup_id}",
@@ -61,7 +61,6 @@ def update_backup(backup_id, backup_type, backup_date, details):
         st.error(f"Error updating backup: {str(e)}")
 
 def delete_backup(backup_id):
-    """删除备份记录"""
     try:
         response = requests.delete(f"{API_BASE_URL}/backups/{backup_id}")
         if response.status_code == 200:
@@ -78,10 +77,7 @@ def main():
     st.title("Backup History Management")
     st.write("Manage backup history for databases.")
 
-    # 创建 tabs
     tab1, tab2 = st.tabs(["View and Edit", "Add and Delete"])
-
-    # 获取备份历史
     backups = fetch_backups()
 
     # Tab 1: View and Edit

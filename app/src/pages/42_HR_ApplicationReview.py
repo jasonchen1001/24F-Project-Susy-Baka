@@ -48,55 +48,47 @@ def main():
                             
                             for app in apps:
                                 with st.container():
-                                    col1, col2, col3 = st.columns([3, 2, 1])
+                                    col1, col2 = st.columns([3, 3])
                                     with col1:
                                         st.write(f"**Applicant:** {app['full_name']}")
                                         st.write(f"**Email:** {app['email']}")
                                         st.write(f"**Applied:** {app['sent_on']}")
                                     
                                     with col2:
-                                        if st.button("Accept", key=f"accept_{app['application_id']}", type="primary"):
-                                            response = requests.put(
-                                                f"http://web-api:4000/hr/applications/{app['application_id']}",
-                                                json={"status": "Accepted"}
-                                            )
-                                            if response.status_code == 200:
-                                                st.success("Application accepted!")
-                                                time.sleep(1)
-                                                st.rerun()
+                                        # 将按钮排成一行
+                                        btn_col1, btn_col2, btn_col3 = st.columns(3)
+                                        with btn_col1:
+                                            if st.button("Accept", key=f"accept_{app['application_id']}", type="primary"):
+                                                response = requests.put(
+                                                    f"http://web-api:4000/hr/applications/{app['application_id']}",
+                                                    json={"status": "Accepted"}
+                                                )
+                                                if response.status_code == 200:
+                                                    st.success("Application accepted!")
+                                                    st.rerun()
                                         
-                                        if st.button("Reject", key=f"reject_{app['application_id']}", type="secondary"):
-                                            response = requests.put(
-                                                f"http://web-api:4000/hr/applications/{app['application_id']}",
-                                                json={"status": "Rejected"}
-                                            )
-                                            if response.status_code == 200:
-                                                st.success("Application rejected!")
-                                                time.sleep(1)
-                                                st.rerun()
-                                    
-                                    with col3:
-                                        delete_btn = st.button(
-                                            "Delete", 
-                                            key=f"delete_{app['application_id']}", 
-                                            type="secondary"
-                                        )
-                                        if delete_btn:
-                                            confirm_delete = st.button(
-                                                "Confirm Delete",
-                                                key=f"confirm_{app['application_id']}",
-                                                type="secondary"
-                                            )
-                                            if confirm_delete:
+                                        with btn_col2:
+                                            if st.button("Reject", key=f"reject_{app['application_id']}", type="secondary"):
+                                                response = requests.put(
+                                                    f"http://web-api:4000/hr/applications/{app['application_id']}",
+                                                    json={"status": "Rejected"}
+                                                )
+                                                if response.status_code == 200:
+                                                    st.success("Application rejected!")
+                                                    st.rerun()
+                                        
+                                        with btn_col3:
+                                            # 简化删除功能
+                                            if st.button("Delete", key=f"delete_{app['application_id']}", type="secondary"):
                                                 response = requests.delete(
                                                     f"http://web-api:4000/hr/applications/{app['application_id']}"
                                                 )
                                                 if response.status_code == 200:
                                                     st.success("Application deleted!")
-                                                    time.sleep(1)
                                                     st.rerun()
                                                 else:
-                                                    st.error(response.json().get('error', 'Failed to delete application'))
+                                                    st.error(f"Failed to delete application: {response.json().get('error', 'Unknown error')}")
+                                    
                                     st.divider()
                     else:
                         st.info("No pending applications to review.")

@@ -7,6 +7,10 @@ from modules.nav import SideBarLinks
 # Page config
 st.title("Resume Management")
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/00_Student_Home.py")
+    
 # Authentication Check
 if not st.session_state.get("authenticated") or st.session_state.get("role") != "Student":
     st.error("Please login as a Student to access this page.")

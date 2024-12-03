@@ -37,30 +37,23 @@ def main():
                         st.write(pos['requirements'])
                         st.write(f"**Posted on:** {pos['posted_date']}")
                         
-                        col1, col2, col3 = st.columns(3)
+                        # 简化按钮布局
+                        col1, col2 = st.columns(2)
                         with col1:
                             if st.button("Edit", key=f"edit_{pos['position_id']}"):
                                 st.session_state['editing_position'] = pos
                                 st.rerun()
                         with col2:
-                            delete_btn = st.button("Delete", key=f"delete_{pos['position_id']}", type="secondary")
-                        with col3:
-                            if delete_btn:
-                                confirm_delete = st.button(
-                                    "Confirm Delete", 
-                                    key=f"confirm_{pos['position_id']}", 
-                                    type="secondary"
+                            if st.button("Delete", key=f"delete_{pos['position_id']}", type="secondary"):
+                                # 直接发送删除请求
+                                response = requests.delete(
+                                    f"http://web-api:4000/hr/internships/{pos['position_id']}"
                                 )
-                                if confirm_delete:
-                                    response = requests.delete(
-                                        f"http://web-api:4000/hr/internships/{pos['position_id']}"
-                                    )
-                                    if response.status_code == 200:
-                                        st.success(response.json().get('message', 'Position deleted!'))
-                                        time.sleep(1)
-                                        st.rerun()
-                                    else:
-                                        st.error(response.json().get('error', 'Failed to delete position'))
+                                if response.status_code == 200:
+                                    st.success("Position deleted successfully!")
+                                    st.rerun()
+                                else:
+                                    st.error(f"Failed to delete position: {response.json().get('error', 'Unknown error')}")
                         st.divider()
             else:
                 st.error("Failed to load positions")

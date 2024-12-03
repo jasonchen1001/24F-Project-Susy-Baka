@@ -3,11 +3,14 @@ import requests
 import pandas as pd
 from datetime import datetime
 
-# API 基础 URL
+
 API_BASE_URL = "http://web-api:4000/maintenance_staff"
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/60_Maintenance_Home.py")
+    
 def fetch_alterations():
-    """获取数据变更历史"""
     try:
         response = requests.get(f"{API_BASE_URL}/alterations")
         if response.status_code == 200:
@@ -18,7 +21,6 @@ def fetch_alterations():
         return None
 
 def update_alteration(alteration_id, alteration_type, alteration_date):
-    """更新数据变更记录"""
     try:
         response = requests.put(
             f"{API_BASE_URL}/alterations/{alteration_id}",
@@ -40,16 +42,12 @@ def main():
     st.title("Data Alteration Management")
     st.write("Manage data alteration history for databases.")
 
-    # 获取数据变更历史
     alterations = fetch_alterations()
 
     if alterations:
-        # 显示当前数据变更历史
         st.subheader("Current Alterations")
         df = pd.DataFrame(alterations)
         st.dataframe(df, hide_index=True, use_container_width=True)
-
-        # 编辑记录
         st.subheader("Edit Alteration")
         selected_alteration = st.selectbox(
             "Select Alteration to Edit",

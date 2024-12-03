@@ -6,6 +6,10 @@ from modules.nav import SideBarLinks
 # Page title
 st.title("Application Tracker")
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/00_Student_Home.py")
+    
 # Authentication check
 if not st.session_state.get("authenticated") or st.session_state.get("role") != "Student":
     st.error("Please login as a Student to access this page.")
@@ -118,6 +122,7 @@ with tabs[3]:
                         add_response = requests.post(f"http://web-api:4000/student/{user_id}/applications", json=payload)
                         if add_response.status_code == 201:
                             st.success("Application successfully added!")
+                            st.rerun()  # 添加自动刷新
                         else:
                             st.error(f"Failed to add application: {add_response.json().get('error', 'Unknown error')}")
             else:
@@ -146,6 +151,7 @@ with tabs[4]:
                         delete_response = requests.delete(f"http://web-api:4000/student/{user_id}/applications/{application_id}")
                         if delete_response.status_code == 200:
                             st.success("Application successfully deleted!")
+                            st.rerun()  
                         else:
                             st.error(f"Failed to delete application: {delete_response.json().get('error', 'Unknown error')}")
             else:

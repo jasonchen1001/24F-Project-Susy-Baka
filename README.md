@@ -6,11 +6,11 @@ InternMatch is a data-driven platform designed to transform the way companies fi
 ---
 
 ## Team Members
-- **Yanzhen Chen** - Github usename: jasonchen1001 - committed to the development of front-end web pages and back-end functions for students, and the production and modification of databases
-- **Rongxuan Zhang** - Github usename: rxz991, RxZhang7
-- **Hanyun Cheng** - Github usename: AcceleratorBarry
-- **Yiyang Bai** - Github usename: Ilovetheirishbeer
-- **Luke Kreysar** - Github usename:
+- **Yanzhen Chen** - Github usename: jasonchen1001 - committed to the development of front-end web pages and back-end functions for students and help teammates to revise the functions of school admin, HR and maintanence staff, and the production and modification of databases
+- **Rongxuan Zhang** - Github usename: rxz991, RxZhang7 - committed to the development of front-end web pages and back-end functions for HR, and the production and modification of databases
+- **Hanyun Cheng** - Github usename: AcceleratorBarry - committed to the development of front-end web pages and back-end functions for maintenance staff, and the production and modification of databases
+- **Yiyang Bai** - Github usename: Ilovetheirishbeer - committed to the development of front-end web pages and back-end functions for school admin, and the production and modification of databases
+- **Luke Kreysar** - Github usename: lukekrr* - production and modification of databases
 
 ---
 

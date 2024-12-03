@@ -3,15 +3,17 @@ import requests
 import pandas as pd
 import logging
 
-# 设置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # API URL
 API_BASE_URL = "http://web-api:4000/maintenance_staff"
 
+# Return to Home button
+if st.button("← Back to Home"):
+    st.switch_page("pages/60_Maintenance_Home.py")
+    
 def fetch_alerts():
-    """获取 Alert 数据"""
     try:
         with st.spinner("Loading alerts..."):
             response = requests.get(f"{API_BASE_URL}/alerts")
@@ -33,20 +35,16 @@ def fetch_alerts():
 
 
 def update_alert(alert_id, metrics, alerts, severity):
-    """更新 Alert 数据"""
     try:
         with st.spinner("Updating alert..."):
-            # 确保 URL 正确拼接
             url = f"{API_BASE_URL}/alerts/{alert_id}"
             
-            # 构建请求数据
             data = {
                 "metrics": metrics,
                 "alerts": alerts,
                 "severity": severity
             }
             
-            # 发送 PUT 请求
             response = requests.put(url, json=data)
             
             if response.status_code == 200:
@@ -64,27 +62,23 @@ def main():
     st.title("Alert History Management")
     st.write("Manage alert history for databases.")
 
-    # 获取告警数据
     with st.spinner("Loading alerts..."):
         response = requests.get(f"{API_BASE_URL}/alerts")
         if response.status_code == 200:
             alerts = response.json()
             if alerts:
-                # 转换为 DataFrame 并显示
+
                 df = pd.DataFrame(alerts)
                 st.subheader("Current Alerts")
                 
-                # 显示当前告警列表
                 st.dataframe(
                     df,
                     hide_index=True,
                     use_container_width=True
                 )
 
-                # 编辑部分
                 st.subheader("Edit Alert")
                 
-                # 使用 database_id 作为选项
                 selected_alert = st.selectbox(
                     "Select Alert to Edit",
                     options=df["database_id"].tolist(),
