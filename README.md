@@ -194,3 +194,4 @@ docker compose down
 ### Notes
 
 - The first startup may take some time due to Docker image builds and database initialization.
+- Regularly back up the database in production environments.
