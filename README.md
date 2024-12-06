@@ -174,6 +174,7 @@ You should see a list of running containers for the database, backend API, and f
 Open your browser and access the application at:
 
 - **Frontend**: [http://localhost:8501](http://localhost:8501)  
+- **API**: [http://localhost:4000](http://localhost:4000)
 
 
 ### Notes
