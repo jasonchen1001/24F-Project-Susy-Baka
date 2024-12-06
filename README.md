@@ -185,6 +185,7 @@ For database management, connect to the MySQL database using a client (port `330
 To stop the application and all running services:
 
 ```bash
+docker compose down
 
 ### Notes
 
