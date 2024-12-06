@@ -180,6 +180,8 @@ For database management, connect to the MySQL database using a client (port `330
 
 ---
 
+### Step 6: Stop the Application
+
 
 ### Notes
 
