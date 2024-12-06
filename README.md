@@ -196,3 +196,5 @@ docker compose down
 - The first startup may take some time due to Docker image builds and database initialization.
 - Regularly back up the database in production environments.
 - Change all default credentials in the `.env` file for security.
+- Use `docker logs <container-id>` to debug any issues during startup or runtime.
+
