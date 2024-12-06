@@ -186,6 +186,7 @@ To stop the application and all running services:
 
 ```bash
 docker compose down
+```
 
 ### Notes
 
