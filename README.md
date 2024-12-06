@@ -169,26 +169,6 @@ You should see a list of running containers for the database, backend API, and f
 
 ---
 
-### Step 5: Access the Application
-
-Open your browser and access the application at:
-
-- **Frontend**: [http://localhost:8501](http://localhost:8501)  
-- **API**: [http://localhost:4000](http://localhost:4000)
-
-For database management, connect to the MySQL database using a client (port `3306`).
-
----
-
-### Step 6: Stop the Application
-
-To stop the application and all running services:
-
-```bash
-docker compose down
-```
-
----
 
 
 ### Notes
