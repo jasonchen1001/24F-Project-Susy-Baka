@@ -188,6 +188,8 @@ To stop the application and all running services:
 docker compose down
 ```
 
+---
+
 ### Notes
 
 - The first startup may take some time due to Docker image builds and database initialization.
