@@ -178,6 +178,9 @@ Open your browser and access the application at:
 
 For database management, connect to the MySQL database using a client (port `3306`).
 
+---
+
+
 ### Notes
 
 - The first startup may take some time due to Docker image builds and database initialization.
