@@ -169,6 +169,7 @@ You should see a list of running containers for the database, backend API, and f
 
 ---
 
+### Step 5: Access the Application
 
 
 ### Notes
