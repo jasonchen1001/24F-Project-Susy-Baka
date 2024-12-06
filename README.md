@@ -199,4 +199,4 @@ docker compose down
 - Use `docker logs <container-id>` to debug any issues during startup or runtime.
 
 ---
-You are now ready to use InternMatch! 
+You are now ready to use InternMatch! If you encounter any issues, refer to the Troubleshooting section or contact the development team.
