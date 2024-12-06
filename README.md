@@ -12,7 +12,7 @@ https://www.dropbox.com/scl/fi/yawgdepkkcgxikckb7spe/CS3200-Video.mov?rlkey=jt8o
 - **Rongxuan Zhang** - Github usename: rxz991, RxZhang7 - committed to the development of front-end web pages and back-end functions for HR, and the production and modification of databases
 - **Hanyun Cheng** - Github usename: AcceleratorBarry - committed to the development of front-end web pages and back-end functions for maintenance staff, and the production and modification of databases
 - **Yiyang Bai** - Github usename: Ilovetheirishbeer - committed to the development of front-end web pages and back-end functions for school admin, and the production and modification of databases
-- **Luke Kreysar** - Github usename: lukekrr* - production and modification of databases
+- **Luke Kreysar** - Github usename: lukekrr* - production and modification of database
 
 ---
 
