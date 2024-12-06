@@ -171,6 +171,9 @@ You should see a list of running containers for the database, backend API, and f
 
 ### Step 5: Access the Application
 
+Open your browser and access the application at:
+
+
 
 ### Notes
 
