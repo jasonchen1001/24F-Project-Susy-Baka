@@ -176,6 +176,7 @@ Open your browser and access the application at:
 - **Frontend**: [http://localhost:8501](http://localhost:8501)  
 - **API**: [http://localhost:4000](http://localhost:4000)
 
+For database management, connect to the MySQL database using a client (port `3306`).
 
 ### Notes
 
