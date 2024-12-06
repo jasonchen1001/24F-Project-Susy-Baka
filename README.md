@@ -27,7 +27,7 @@ https://www.dropbox.com/scl/fi/yawgdepkkcgxikckb7spe/CS3200-Video.mov?rlkey=jt8o
 **Features:**
 - Resume upload and management
 - Automated resume improvement suggestions
-- Real-time application track
+- Real-time application tracking
 - View notification history
 - Multiple resume versions support
 - Application analytics dashboard
@@ -190,13 +190,4 @@ docker compose down
 
 ---
 
-### Notes
 
-- The first startup may take some time due to Docker image builds and database initialization.
-- Regularly back up the database in production environments.
-- Change all default credentials in the `.env` file for security.
-- Use `docker logs <container-id>` to debug any issues during startup or runtime.
-
----
-
-You are now ready to use InternMatch! If you encounter any issues, refer to the Troubleshooting section or contact the development team.
