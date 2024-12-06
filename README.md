@@ -27,7 +27,7 @@ https://www.dropbox.com/scl/fi/yawgdepkkcgxikckb7spe/CS3200-Video.mov?rlkey=jt8o
 **Features:**
 - Resume upload and management
 - Automated resume improvement suggestions
-- Real-time application 
+- Real-time application tracking
 - View notification history
 - Multiple resume versions support
 - Application analytics dashboard
