@@ -198,3 +198,4 @@ docker compose down
 - Change all default credentials in the `.env` file for security.
 - Use `docker logs <container-id>` to debug any issues during startup or runtime.
 
+---
